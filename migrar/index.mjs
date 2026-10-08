@@ -155,15 +155,15 @@ export async function migrar(root, opcoes = {}) {
   const dirsComp = [join(root, base + 'components')].filter(existsSync);
   const ignorar = (opcoes.ignorar || []).map((g) => barra(g).replace(/\/$/, ''));
   const relDe = (abs) => barra(relative(root, abs));
+  const ignorado = (abs) => {
+    const r = '/' + relDe(abs);
+    return ignorar.some((g) => r.startsWith('/' + g + '/') || r === '/' + g);
+  };
   const alvos = [appDir, ...dirsComp]
     .flatMap((d) => listar(d, ['.tsx']))
-    .filter((abs) => {
-      const r = '/' + relDe(abs);
-      if (FORA.some((rx) => rx.test(r))) return false;
-      return !ignorar.some((g) => r.startsWith('/' + g + '/') || r === '/' + g);
-    });
+    .filter((abs) => !FORA.some((rx) => rx.test('/' + relDe(abs))) && !ignorado(abs));
   for (const a of alvos) if (!project.getSourceFile(a)) project.addSourceFileAtPath(a);
-  const foraDoMigrar = [appDir, ...dirsComp].flatMap((d) => listar(d, ['.tsx'])).filter((abs) => FORA.some((rx) => rx.test('/' + relDe(abs))) && !/\.(test|spec|stories)\.tsx$/.test(abs));
+  const foraDoMigrar = [appDir, ...dirsComp].flatMap((d) => listar(d, ['.tsx'])).filter((abs) => FORA.some((rx) => rx.test('/' + relDe(abs))) && !ignorado(abs) && !/\.(test|spec|stories)\.tsx$/.test(abs));
 
   /* ── namespace de cada arquivo ───────────────────────────────────────── */
   const ehApp = (abs) => relDe(abs).startsWith(base + 'app/');
@@ -420,6 +420,9 @@ export async function migrar(root, opcoes = {}) {
   ];
   for (const [abs, tipo] of extras) {
     if (/\.(test|spec)\.ts$/.test(abs) || /\.d\.ts$/.test(abs)) continue;
+    /* `--ignorar` vale pra lista também: a área deixada de fora (admin, time)
+       não enche a revisão do que foi migrado com o texto dela. */
+    if (ignorado(abs)) continue;
     const sf = project.getSourceFile(abs) || project.addSourceFileAtPath(abs);
     for (const lit of literaisSobrando(sf, new Set())) r.revisao.push({ arq: relDe(abs), linha: lit.getStartLineNumber(), motivo: motivoDeLiteral(lit, tipo), trecho: textoDe(lit) });
   }

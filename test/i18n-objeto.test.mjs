@@ -426,3 +426,17 @@ export function Senha() {
   assert.match(md, /## Traduzir pro en \(entrou com o texto em pt-br\) \(2\)/);
   assert.match(md, /en→pt-br: 1/);
 });
+
+test('migrar --ignorar: a área de fora não é migrada nem enche a revisão (tsx, action .ts)', async () => {
+  const root = board({
+    'app/sobre/Texto.tsx': '"use client";\nexport function Texto() { return <h1>Quem somos</h1>; }\n',
+    'app/admin/Painel.tsx': '"use client";\nexport function Painel() { return <h1>Painel interno</h1>; }\n',
+    'app/admin/actions.ts': '"use server";\nexport async function salvar() { return { erro: "Não foi possível salvar o cliente" }; }\n',
+  });
+  writeFileSync(join(root, 'copy-edit.config.mjs'), `export default ${JSON.stringify({ adapter: 'i18n-objeto', opcoes: detectar(root).opcoes })}\n`);
+  const r = await migrar(root, { ...SEM_PORTOES, ignorar: ['app/admin'] });
+  assert.equal(r.ok, true, r.erro);
+  assert.match(ler(root, 'app/admin/Painel.tsx'), /<h1>Painel interno<\/h1>/);
+  assert.doesNotMatch(ler(root, 'app/sobre/Texto.tsx'), /Quem somos/);
+  assert.doesNotMatch(ler(root, 'copy-edit-migrar.md'), /app\/admin/);
+});
