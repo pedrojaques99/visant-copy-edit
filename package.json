@@ -11,13 +11,16 @@
     "bin",
     "server",
     "client",
-    "adapters"
+    "adapters",
+    "writers",
+    "lint"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "vendor:lint": "node scripts/vendor-lint.mjs"
   },
   "dependencies": {
     "@vercel/stega": "^1.1.0"

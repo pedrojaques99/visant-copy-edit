@@ -23,7 +23,7 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, extname } from 'node:path';
+import { dirname, join, extname, isAbsolute } from 'node:path';
 
 const PACOTE = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CLIENTE = join(PACOTE, 'client');
@@ -200,11 +200,15 @@ export function parseLint(out, prefixo = '') {
    que separa a voz falada do texto que soa gerado. O linter já existia e só
    rodava no `npm run check`, ou seja, minutos ou dias depois da frase ter sido
    escrita. Aqui ele responde no segundo seguinte, que é quando ainda dá pra
-   reescrever sem custo. O script é do repo (cada um vendoriza a skill
-   visant-copy no seu caminho), então vem da config. */
+   reescrever sem custo. O padrão é a cópia da skill visant-copy que mora
+   neste pacote (lint/copy-lint.mjs, `npm run vendor:lint`); a config do repo
+   pode apontar outro (caminho relativo à raiz do repo) ou `false` pra desligar. */
+export const LINT_PADRAO = join(PACOTE, 'lint', 'copy-lint.mjs');
+
 export function rodarLint(root, script, arquivo, prefixo = '') {
+  if (script === undefined) script = LINT_PADRAO;
   if (!script) return [];
-  const { code, out } = rodarNode(root, [join(root, script), arquivo]);
+  const { code, out } = rodarNode(root, [isAbsolute(script) ? script : join(root, script), arquivo]);
   if (code === 0) return [];
   return parseLint(out, prefixo);
 }

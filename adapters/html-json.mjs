@@ -46,6 +46,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, extname, normalize } from 'node:path';
 import { MIME, guardaEscritaCega, normalizarValor, rodarLint, rodarNode } from '../server/nucleo.mjs';
+import { estiloNaFolha } from '../writers/css-token.mjs';
 
 /* ── injeção ───────────────────────────────────────────────────────────────
    Duas tags e nada mais. O editor vai como ARQUIVO e não como <script> inline
@@ -54,17 +55,6 @@ import { MIME, guardaEscritaCega, normalizarValor, rodarLint, rodarNode } from '
    onde não importa não serve de teste. */
 const TAGS =
   '<link rel="stylesheet" href="/__copy/editor.css">\n<script src="/__copy/editor.js" defer></script>\n';
-
-/* Cada propriedade tem a forma de valor que ela aceita. Cor só entra como
-   token (var(--x)): a amostra do editor é a paleta da marca, não um hex solto. */
-const PROPS_ESTILO = {
-  'max-width': /^\d{1,4}(\.\d+)?(px|ch|rem|em|%|vw)$/,
-  color: /^var\(--[a-z0-9-]+\)$/i,
-  'font-family': /^var\(--font-[a-z0-9-]+\)$/i,
-  'font-size': /^var\(--[a-z0-9-]+\)$/i,
-};
-/* .classe, ou [data-copy="chave"] pro texto que não tem classe. */
-const SELETOR_OK = /^(\.[a-z][a-z0-9-]*|\[data-copy="[a-z0-9._-]+"\])$/i;
 
 export function criar(root, op) {
   const ROOT = normalize(root);
@@ -126,40 +116,12 @@ export function criar(root, op) {
     return injetarExtra(comEditor);
   }
 
-  /* Estilo vindo do editor (alça de largura, amostra de cor): grava na
-     PRIMEIRA regra de topo `seletor {` da folha (a de base, fora de @media).
-     Só seletor e propriedade da lista, nada de CSS livre: um editor visual que
-     escreve CSS arbitrário vira gerador de regra morta. */
+  /* Estilo vindo do editor (alça de largura, amostra de cor): grava na regra
+     de topo do seletor na folha do site. O caminho mora no writers/css-token
+     (estiloNaFolha), junto do caminho da fila que o app React usa. */
   function estilo(dados) {
     if (!op.css) return { erro: 'este repo não declarou folha de estilo (css) na config' };
-    const CSS_SITE = join(ROOT, op.css);
-    const seletor = String(dados.seletor || (dados.classe ? '.' + dados.classe : ''));
-    const prop = String(dados.prop || '');
-    const valor = String(dados.valor || '');
-    if (!SELETOR_OK.test(seletor)) return { erro: 'seletor inválido' };
-    if (!PROPS_ESTILO[prop]) return { erro: 'propriedade fora da lista' };
-    /* Vazio remove a declaração: é o desfazer de quem não tinha a propriedade. */
-    if (valor && !PROPS_ESTILO[prop].test(valor)) return { erro: 'valor inválido' };
-    const css = readFileSync(CSS_SITE, 'utf8');
-    const nl = css.includes('\r\n') ? '\r\n' : '\n';
-    const esc = seletor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const m = css.match(new RegExp('^' + esc + ' \\{\\r?\\n([\\s\\S]*?)^\\}', 'm'));
-    /* Sem regra de topo pro seletor: nasce uma no fim do arquivo. */
-    if (!m) {
-      if (!valor) return { ok: true, arquivo: op.css, antes: '', depois: '' };
-      const sep = css.endsWith(nl) ? '' : nl;
-      writeFileSync(CSS_SITE, css + sep + `${seletor} {${nl}  ${prop}: ${valor};${nl}}${nl}`);
-      return { ok: true, arquivo: op.css, antes: '', depois: `${prop}: ${valor};` };
-    }
-    const decl = new RegExp('^(\\s*)' + prop + ':[^;]*;', 'm');
-    const corpo = !valor
-      ? m[1].replace(new RegExp('^\\s*' + prop + ':[^;]*;\\r?\\n', 'm'), '')
-      : decl.test(m[1])
-        ? m[1].replace(decl, `$1${prop}: ${valor};`)
-        : m[1] + `  ${prop}: ${valor};${nl}`;
-    const antes = (m[1].match(decl) || [''])[0].trim();
-    writeFileSync(CSS_SITE, css.replace(m[0], `${seletor} {${nl}${corpo}}`));
-    return { ok: true, arquivo: op.css, antes, depois: valor ? `${prop}: ${valor};` : '' };
+    return estiloNaFolha(dados, { root: ROOT, css: join(ROOT, op.css) });
   }
 
   /* Token: escreve no tokens.json (o SSoT) e roda o build de tokens, que regera

@@ -157,14 +157,66 @@ test('next-intl: chave do stega vira caminho no JSON aninhado, com \\r\\n preser
     assert.equal((await s.post('/__copy/salvar', { chave: 'conta.pagina', valor: 'x' })).status, 400);
     assert.equal((await s.post('/__copy/salvar', { chave: '../x.y', valor: 'x' })).status, 400);
 
-    /* Token e estilo ainda não gravam aqui: responde como o servidor antigo do Club. */
-    assert.equal((await s.post('/__copy/estilo', { seletor: '[data-copy="conta.pagina.titulo"]', prop: 'max-width', valor: '20ch' })).status, 400);
+    /* Sem `tokens` na config: a lista vem vazia e o token responde o aviso.
+       Estilo vira pedido na fila (writers/css-token), listado na rota da chave. */
     assert.deepEqual(await fetch(s.base + '/__copy/tokens').then((r) => r.json()), { tokens: [] });
+    assert.equal((await s.post('/__copy/token', { nome: 'color-fg', valor: '#fff' })).status, 400);
+    const est = await s.post('/__copy/estilo', { seletor: '[data-copy="conta.pagina.titulo"]', prop: 'max-width', valor: '20ch' });
+    assert.equal(est.status, 200, JSON.stringify(est.corpo));
+    assert.equal(est.corpo.fila, true);
+    const fila = await fetch(s.base + '/__copy/comentarios?pagina=/conta').then((r) => r.json());
+    assert.match(fila.itens[0].texto, /^estilo max-width: 20ch/);
 
     /* Comentário sai sem a chave invisível. */
     const c = await s.post('/__copy/comentar', { pagina: '/conta', seletor: 'h1', trecho: sujo, texto: 'maior' });
     assert.equal(c.status, 200);
     assert.match(readFileSync(join(root, 'docs', 'COMENTARIOS-IA.md'), 'utf8'), /· "Sua conta" · maior\n$/);
+  } finally {
+    await s.fechar();
+  }
+});
+
+test('next-intl formato locale: idioma da URL escolhe o arquivo; token grava pelo writer', async () => {
+  const root = tmp();
+  mkdirSync(join(root, 'messages'));
+  mkdirSync(join(root, 'app'));
+  writeFileSync(join(root, 'messages', 'pt-BR.json'), JSON.stringify({ hero: { tagline: 'Oi' } }, null, 2) + '\n');
+  writeFileSync(join(root, 'messages', 'en.json'), JSON.stringify({ hero: { tagline: 'Hi' } }, null, 2) + '\n');
+  writeFileSync(join(root, 'app', 'globals.css'), '@theme {\n  --color-primary: #000;\n}\n');
+  const adapter = nextIntl(root, {
+    formato: 'locale',
+    pasta: 'messages',
+    localePadrao: 'pt-BR',
+    lint: false,
+    tokens: { css: 'app/globals.css' },
+    dev: false,
+  });
+  const s = await subir(root, adapter);
+  try {
+    const pt = await fetch(s.base + '/__copy/chaves?pagina=/pt-BR/portfolio').then((r) => r.json());
+    assert.deepEqual(pt, { arquivo: 'messages/pt-BR.json', chaves: { 'hero.tagline': 'Oi' } });
+    const en = await fetch(s.base + '/__copy/chaves?pagina=/en').then((r) => r.json());
+    assert.equal(en.chaves['hero.tagline'], 'Hi');
+    /* Sem prefixo de idioma, o padrão. */
+    assert.equal((await fetch(s.base + '/__copy/chaves?pagina=/').then((r) => r.json())).arquivo, 'messages/pt-BR.json');
+
+    const r = await s.post('/__copy/salvar', { pagina: '/en', chave: 'hero.tagline', antes: 'Hi', valor: 'Hello' });
+    assert.equal(r.status, 200, JSON.stringify(r.corpo));
+    assert.equal(r.corpo.arquivo, 'messages/en.json');
+    assert.equal(JSON.parse(readFileSync(join(root, 'messages', 'en.json'), 'utf8')).hero.tagline, 'Hello');
+    assert.equal(JSON.parse(readFileSync(join(root, 'messages', 'pt-BR.json'), 'utf8')).hero.tagline, 'Oi');
+
+    const tk = await fetch(s.base + '/__copy/tokens').then((x) => x.json());
+    assert.deepEqual(tk.tokens, [{ grupo: 'cor', nome: 'color-primary', valor: '#000' }]);
+    const t = await s.post('/__copy/token', { nome: 'color-primary', valor: '#111' });
+    assert.equal(t.status, 200, JSON.stringify(t.corpo));
+    assert.match(readFileSync(join(root, 'app', 'globals.css'), 'utf8'), /--color-primary: #111;/);
+
+    const e = await s.post('/__copy/estilo', { seletor: '[data-copy="hero.tagline"]', prop: 'color', valor: 'var(--color-primary)' });
+    assert.equal(e.status, 200, JSON.stringify(e.corpo));
+    const fila = await fetch(s.base + '/__copy/comentarios?pagina=/pt-BR').then((x) => x.json());
+    assert.equal(fila.itens.length, 1);
+    assert.match(fila.itens[0].texto, /text-primary/);
   } finally {
     await s.fechar();
   }
