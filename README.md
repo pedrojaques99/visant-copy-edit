@@ -26,7 +26,7 @@ A detecção, na ordem:
    `import(`@/messages/${locale}.json`)` vira formato `locale` (site de cliente);
    `import { COPY } from '@/copy'` com um JSON por rota vira formato `rota` (Club).
 2. **HTML estático** com `data-copy` + `copy*.json` na raiz (visantismo).
-3. Nada disso: não sobe, e aponta o `copy-edit migrar` (fase 3).
+3. Nada disso: não sobe, e aponta o `copy-edit migrar` (abaixo).
 
 A config, escrita à mão ou pela detecção:
 
@@ -36,6 +36,50 @@ export default {
   opcoes: { /* ver o cabeçalho de adapters/<nome>.mjs */ },
 }
 ```
+
+## Migrar um app Next que tem o texto no JSX (`copy-edit migrar`)
+
+```
+copy-edit migrar --dry                         resumo + diff + revisão numa pasta temporária, nada gravado
+copy-edit migrar                               grava, roda os portões, desfaz tudo se reprovar
+copy-edit migrar --ignorar app/render,app/medir-livro --marca "Nome"
+```
+
+O que os 8 agentes fizeram à mão no Club em 07/10/2026, como codemod em AST (ts-morph):
+
+1. **Infra**, só se o repo ainda não tem next-intl: instala `next-intl` e `@vercel/stega` NO REPO
+   (são dependências do site) e monta o desenho do Club: `i18n/request.ts` (um idioma, sem rota
+   de idioma, stega com `COPY_EDIT=1`), `copy/index.ts`, `global.d.ts` (chave tipada), plugin +
+   rewrite do `/__copy` no next.config, `NextIntlClientProvider` + a ponte no layout raiz, e o
+   script `copy:edit`. Repo que já tem next-intl só ganha texto (formato `rota` ou `locale`,
+   pela detecção).
+2. **Texto**, em `app/**` e `components/**` (.tsx). Namespace = a rota (`app/(club)/biblioteca/...`
+   → `biblioteca`); componente fora de `app/` vai pra rota de quem importa, e pra `comum` quando
+   mais de uma rota usa. Chave = `<seção>.<primeiras palavras em camelCase>` (a página da rota fica
+   sem seção). Texto IDÊNTICO: o espaço segue a regra do JSX, entidade vira caractere, número fora
+   de plural vai como `String(n)` (o ICU formataria 2026 como "2.026").
+   - componente `async` → `const t = await getTranslations('rota')`; o resto → `useTranslations`
+     (client ou server síncrono). `t` ocupado no arquivo vira `tr`.
+   - texto de JSX, com `{variavel}` string/número no meio → ICU com variável;
+     `{n === 1 ? 'a' : 'b'}` → ICU plural;
+   - atributo lido: placeholder, aria-label, alt, title, label e as props de texto de componente
+     (`titulo`, `descricao`, `rotulo`...);
+   - frase cortada por elemento simples (`Leia o <a>guia</a>.`) → `t.rich` com o elemento intacto;
+   - ternário/`&&` com string dos dois lados; frase passada pra `confirm/alert/toast/setX` dentro
+     de componente.
+3. **Revisão** (`copy-edit-migrar.md`, arquivo:linha + motivo): o que não é óbvio NÃO é chutado.
+   Texto de `lib/`, mensagem de server action/rota, `throw`, mapa no módulo, metadata, string em
+   variável, condicional que não é plural, variável que pode ser `null`, frase cortada por elemento
+   com conteúdo, texto em helper minúsculo (o `t` não alcança), `global-error` e imagem gerada.
+   Nunca migra className, URL, marca, `<code>`/`<kbd>`, log, comentário.
+4. **Tipo em memória** antes de gravar: arquivo que ficaria com erro de tsc novo volta pro
+   original e vai pra revisão, em vez de derrubar a migração inteira.
+5. **Portões** depois de gravar: `tsc --noEmit` e eslint nos arquivos mexidos (só erro NOVO conta)
+   reprovaram → desfaz tudo (inclusive o JSON criado). copy-lint nos JSON só informa: migração
+   não é reescrita.
+
+Provado contra o Club de ANTES da 1ª onda (f282311): 630 textos em 83 arquivos (598 chaves),
+78% dos textos que os agentes migraram, tsc + eslint + 498 testes verdes. Detalhes no PLANO.
 
 ## Ligar num app next-intl
 
@@ -80,6 +124,7 @@ adapters/html-json.mjs   copy*.json plano + build do repo (visantismo)
 adapters/next-intl.mjs   JSON aninhado, formato rota (Club) ou locale (site de cliente)
 writers/css-token.mjs    token na folha + estilo (na folha ou na fila)
 lint/copy-lint.mjs       o lint padrão (vendor da skill)
+migrar/                  `copy-edit migrar`: codemod (ts-morph), infra do next-intl, portões
 ```
 
-`npm test` roda núcleo, adapters, writer e detecção gravando em diretório temporário.
+`npm test` roda núcleo, adapters, writer, detecção e migrar gravando em diretório temporário.

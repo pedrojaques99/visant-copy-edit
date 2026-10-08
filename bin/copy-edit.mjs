@@ -5,6 +5,7 @@
  *   node ../visant-copy-edit/bin/copy-edit.mjs              (o `copy:edit:local`)
  *   copy-edit 4321                                          porta fixa
  *   copy-edit --detectar                                    só diz o que acharia
+ *   copy-edit migrar [--dry]                               texto do JSX → JSON (migrar/)
  *   copy-edit --help
  *
  * Lê `copy-edit.config.mjs` da raiz do repo (process.cwd()). A config diz qual
@@ -33,6 +34,8 @@ if (args.includes('--help') || args.includes('-h')) {
 
 uso: copy-edit [porta]
      copy-edit --detectar     mostra o que a detecção acharia, sem gravar nada
+     copy-edit migrar [--dry] [--ignorar app/x,app/y] [--marca "Nome"]
+                              texto do JSX → next-intl + copy/<rota>.json (ver README)
 
 Roda na raiz do repo. Com copy-edit.config.mjs, ela manda:
 
@@ -52,8 +55,8 @@ const root = process.cwd();
 const arqConfig = join(root, 'copy-edit.config.mjs');
 
 if (args[0] === 'migrar') {
-  console.error('\n  copy-edit migrar ainda não existe: é a fase 3 (visant-club/docs/PLANO-LIB-COPY-EDIT.md).\n');
-  process.exit(1);
+  const { executar } = await import('../migrar/cli.mjs');
+  process.exit(await executar(root, args.slice(1)));
 }
 
 if (args.includes('--detectar')) {

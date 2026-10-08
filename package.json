@@ -13,7 +13,8 @@
     "client",
     "adapters",
     "writers",
-    "lint"
+    "lint",
+    "migrar"
   ],
   "engines": {
     "node": ">=20"
@@ -23,6 +24,8 @@
     "vendor:lint": "node scripts/vendor-lint.mjs"
   },
   "dependencies": {
-    "@vercel/stega": "^1.1.0"
+    "@vercel/stega": "^1.1.0",
+    "diff": "^8.0.4",
+    "ts-morph": "^28.0.0"
   }
 }

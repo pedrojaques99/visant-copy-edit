@@ -267,8 +267,8 @@ function htmlJson(root, pkg) {
 
 export const MIGRAR =
   'Não reconheci onde mora a copy deste repo (nem next-intl, nem HTML com data-copy + copy*.json).\n' +
-  '    O caminho é migrar o texto pra JSON: `copy-edit migrar` faz isso (chega na fase 3 do\n' +
-  '    @visant/copy-edit, visant-club/docs/PLANO-LIB-COPY-EDIT.md). Até lá, escreva um\n' +
+  '    Num app Next, `copy-edit migrar --dry` mostra a migração do texto do JSX pra next-intl\n' +
+  '    + copy/<rota>.json, e `copy-edit migrar` faz. Fora disso, escreva um\n' +
   '    copy-edit.config.mjs à mão (ver o README do pacote).';
 
 export function detectar(root) {
