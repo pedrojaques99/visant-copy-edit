@@ -127,7 +127,7 @@ export function montarIcu(partes) {
 /* O texto de fora das chaves ICU, pra dar nome à chave ("Hoje {n, plural...}
    na estante" → "Hoje na estante"). Mensagem que é só plural usa o ramo
    `other` ("{n} {n, plural, =1 {aula} other {aulas}}" → "aulas"). */
-export function slugDeIcu(msg) {
+export function textoForaDoIcu(msg) {
   let fora = '';
   let prof = 0;
   for (const c of msg) {
@@ -136,7 +136,51 @@ export function slugDeIcu(msg) {
     else if (prof === 0) fora += c;
   }
   fora = fora.replace(/<\/?[A-Za-z0-9]+>/g, ' ');
-  if (/[A-Za-zÀ-ÿ]/.test(fora)) return slug(fora);
+  if (/[A-Za-zÀ-ÿ]/.test(fora)) return fora;
   const outro = msg.match(/other \{([^{}]*)/);
-  return outro && /[A-Za-zÀ-ÿ]/.test(outro[1]) ? slug(outro[1]) : 'texto';
+  return outro && /[A-Za-zÀ-ÿ]/.test(outro[1]) ? outro[1] : '';
+}
+export function slugDeIcu(msg) {
+  const fora = textoForaDoIcu(msg);
+  return fora ? slug(fora) : 'texto';
+}
+
+/* ── nome com sentido ─────────────────────────────────────────────────── */
+
+/* A primeira palavra do texto, se ela for um verbo de botão: infinitivo
+   (`Salvar`, `Ir pro dashboard`) ou imperativo comum de interface (`Salva`,
+   `Ver`, `Tenta de novo`). Regra simples, sem dicionário: termina em
+   -ar/-er/-ir/-or e não é um dos substantivos que também terminam assim.
+   Devolve a palavra sem acento e minúscula (`Começar` → `comecar`), ou null. */
+const NAO_VERBO = new Set([
+  'lugar', 'par', 'mar', 'bar', 'lar', 'valor', 'melhor', 'pior', 'maior', 'menor', 'anterior', 'posterior', 'exterior', 'interior', 'superior', 'inferior',
+  'cor', 'flor', 'amor', 'autor', 'favor', 'senhor', 'setor', 'por', 'qualquer', 'mulher', 'militar', 'popular', 'familiar', 'particular', 'regular',
+  'similar', 'escolar', 'solar', 'celular', 'titular', 'singular', 'computador', 'editor', 'leitor', 'professor', 'diretor', 'designer', 'freelancer',
+  'super', 'poster', 'player', 'banner', 'header', 'footer', 'user', 'member', 'partner', 'newsletter', 'order', 'master', 'folder', 'builder', 'cover',
+  'outer', 'inner', 'after', 'never', 'other', 'over', 'under', 'for', 'or', 'mentor', 'tutor', 'criador', 'apoiador', 'ar',
+]);
+const IMPERATIVO = new Set([
+  'ver', 've', 'abre', 'abra', 'fecha', 'feche', 'sai', 'saia', 'salva', 'salve', 'envia', 'envie', 'volta', 'volte', 'tenta', 'tente', 'copia', 'copie',
+  'baixa', 'baixe', 'assina', 'assine', 'continua', 'continue', 'comeca', 'comece', 'publica', 'publique', 'responde', 'responda', 'compra', 'compre',
+  'escolhe', 'escolha', 'confirma', 'confirme', 'cancela', 'cancele', 'apaga', 'apague', 'exclui', 'exclua', 'edita', 'edite', 'adiciona', 'adicione',
+  'cria', 'crie', 'busca', 'procura', 'procure', 'mostra', 'mostre', 'esconde', 'pula', 'pule', 'usa', 'use', 'faz', 'faca', 'troca', 'troque', 'manda',
+  'mande', 'libera', 'desliga', 'liga', 'acessa', 'acesse', 'conhece', 'conheca', 'descobre', 'descubra', 'experimenta', 'experimente', 'garante',
+  'garanta', 'gera', 'gere', 'marca', 'marque', 'desmarca', 'limpa', 'limpe', 'recarrega', 'atualiza', 'atualize', 'reenvia', 'tira', 'remove', 'remova',
+  'aplica', 'aplique', 'sobe', 'suba', 'grava', 'grave', 'inscreve', 'inscreva', 'participa', 'participe', 'junta', 'junte', 'fala', 'fale', 'chama',
+  'chame', 'pede', 'peca', 'agenda', 'agende', 'segue', 'siga', 'leia', 'assista', 'assiste', 'olha', 'olhe', 'entra', 'pega', 'pegue', 'ativa', 'ative',
+  'save', 'send', 'back', 'cancel', 'delete', 'edit', 'add', 'create', 'open', 'close', 'continue', 'start', 'buy', 'subscribe', 'sign', 'log', 'view',
+  'see', 'go', 'try', 'copy', 'download', 'upload', 'share', 'submit', 'remove', 'retry', 'next', 'previous',
+]);
+export function verboDe(texto) {
+  const p = semAcento(String(texto))
+    .replace(/\{[^}]*\}/g, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[^A-Za-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)[0]
+    ?.toLowerCase();
+  if (!p || NAO_VERBO.has(p)) return null;
+  if (IMPERATIVO.has(p)) return p;
+  if (p === 'ir' || p === 'ler' || p === 'dar' || p === 'ter' || p === 'ser' || p === 'por') return p === 'por' ? null : p;
+  return /^[a-z]{2,}(ar|er|ir|or)$/.test(p) ? p : null;
 }

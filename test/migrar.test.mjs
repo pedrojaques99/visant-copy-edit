@@ -9,7 +9,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { migrar, lugarNoApp, aplicar } from '../migrar/index.mjs';
-import { limparJsxText, slugDeIcu, pareceTexto, decodificar } from '../migrar/texto.mjs';
+import { limparJsxText, slugDeIcu, pareceTexto, decodificar, verboDe } from '../migrar/texto.mjs';
 import { acrescentarIndex } from '../migrar/infra.mjs';
 
 function repo(arquivos) {
@@ -73,6 +73,7 @@ test('rota e seção pelo caminho do app', () => {
   assert.deepEqual(lugarNoApp('(club)/biblioteca/loading.tsx'), { ns: 'biblioteca', secao: 'carregando' });
   assert.deepEqual(lugarNoApp('layout.tsx'), { ns: 'comum', secao: 'layout' });
   assert.deepEqual(lugarNoApp('page.tsx'), { ns: 'inicio', secao: null });
+  assert.deepEqual(lugarNoApp('definir-senha/DefinirSenha.tsx'), { ns: 'definir-senha', secao: null }, 'seção com o nome da rota é redundante');
 });
 
 test('aplicar: de trás pra frente, sobreposição descarta a de fora inteira', () => {
@@ -104,7 +105,7 @@ export default async function BibliotecaPage() {
       </p>
       <p>Desde {ano}</p>
       <input placeholder="Buscar por nome…" aria-label="Buscar na biblioteca" />
-      <img src="/a.webp" alt="Pintura a óleo de uma estante" />
+      <img src="/estante@640.webp" alt="Pintura a óleo de uma estante" />
       <Vazio titulo="Nada aqui ainda." />
     </main>
   )
@@ -117,16 +118,17 @@ export default async function BibliotecaPage() {
   const pag = ler(root, 'app/(club)/biblioteca/page.tsx');
   assert.match(pag, /import \{ getTranslations \} from 'next-intl\/server'/);
   assert.match(pag, /const t = await getTranslations\('biblioteca'\)/);
-  assert.match(pag, /<h1 className="text-lg">\{t\('aTuaBiblioteca'\)\}<\/h1>/);
-  assert.match(pag, /placeholder=\{t\('buscarPorNome'\)\}/);
-  assert.match(pag, /alt=\{t\('pinturaAOleoDe'\)\}/);
-  assert.match(pag, /titulo=\{t\('nadaAquiAinda'\)\}/);
+  assert.match(pag, /<h1 className="text-lg">\{t\('titulo'\)\}<\/h1>/);
+  assert.match(pag, /placeholder=\{t\('campo\.placeholder'\)\}/);
+  assert.match(pag, /alt=\{t\('estante\.alt'\)\}/);
+  assert.match(pag, /titulo=\{t\('vazio\.titulo'\)\}/);
   /* número fora de plural vai como String(): o ICU formataria 2026 como 2.026 */
   assert.match(pag, /t\('desde', \{ ano: String\(ano\) \}\)/);
   const json = lerJson(root, 'copy/biblioteca.json');
-  assert.equal(json.aTuaBiblioteca, 'A tua biblioteca');
-  assert.equal(json.olaHojeNaEstante, 'Olá, {nome}. Hoje {n, plural, =1 {é 1 item} other {são {n} itens}} na estante.');
-  assert.match(pag, /t\('olaHojeNaEstante', \{ nome, n: itens\.length \}\)/);
+  assert.equal(json.titulo, 'A tua biblioteca');
+  assert.equal(json.sub, 'Olá, {nome}. Hoje {n, plural, =1 {é 1 item} other {são {n} itens}} na estante.');
+  assert.match(pag, /t\('sub', \{ nome, n: itens\.length \}\)/);
+  assert.equal(json.vazio.titulo, 'Nada aqui ainda.');
   assert.equal(json.desde, 'Desde {ano}');
   /* o que já existia nos outros JSON não é tocado */
   assert.deepEqual(lerJson(root, 'copy/conta.json'), { titulo: 'Conta' });
@@ -153,7 +155,7 @@ export function Painel({ n, lista }: { n: number; lista: { t: string }[] }) {
   assert.match(src, /^'use client'\n\nimport \{ useTranslations \} from 'next-intl'\n/);
   assert.match(src, /const tr = useTranslations\('conta'\)/);
   assert.match(src, /<p>\{tr\('painel\.aulas', \{ n \}\)\}<\/p>/);
-  assert.match(src, /confirm\(tr\('painel\.sairMesmoDaConta'\)\)/);
+  assert.match(src, /confirm\(tr\('painel\.aviso\.sair'\)\)/);
   const json = lerJson(root, 'copy/conta.json');
   assert.equal(json.titulo, 'Conta');
   assert.equal(json.painel.aulas, '{n} {n, plural, =1 {aula} other {aulas}}');
@@ -227,7 +229,7 @@ test('--dry não grava nada e devolve o diff', async () => {
   assert.equal(ler(root, 'app/(club)/biblioteca/page.tsx'), antes);
   assert.deepEqual(lerJson(root, 'copy/biblioteca.json'), {});
   assert.equal(existsSync(join(root, 'copy-edit-migrar.md')), false);
-  assert.match(r.patch, /\+  return <h1>\{t\('aTuaBiblioteca'\)\}<\/h1>/);
+  assert.match(r.patch, /\+  return <h1>\{t\('titulo'\)\}<\/h1>/);
 });
 
 test('tsc reprovou: desfaz TUDO, inclusive o JSON criado, e o repo volta como estava', async () => {
@@ -304,8 +306,122 @@ test('repo sem next-intl: monta a infra do Club (request, copy/index, tipos, plu
   assert.match(ly, /<body><NextIntlClientProvider>\{children\}<\/NextIntlClientProvider>/);
   assert.match(ly, /\/__copy\/ponte-stega\.js/);
   assert.match(ly, /import \{ NextIntlClientProvider \} from 'next-intl'/);
-  assert.equal(lerJson(root, 'copy/inicio.json').olaMundo, 'Olá, mundo');
+  assert.equal(lerJson(root, 'copy/inicio.json').titulo, 'Olá, mundo');
   assert.equal(lerJson(root, 'copy/sobre.json').quemSomos, 'Quem somos');
   assert.match(ler(root, 'app/sobre/page.tsx'), /await getTranslations\('sobre'\)/);
   assert.equal(lerJson(root, 'package.json').scripts['copy:edit'], 'npx --yes github:pedrojaques99/visant-copy-edit');
+});
+
+/* ── nome com sentido: o papel do elemento decide antes das palavras ────── */
+
+test('verboDe: infinitivo e imperativo de botão; substantivo em -ar/-or não', () => {
+  assert.equal(verboDe('Salvar rascunho'), 'salvar');
+  assert.equal(verboDe('Ver o plano'), 'ver');
+  assert.equal(verboDe('Começar agora'), 'comecar');
+  assert.equal(verboDe('Tenta de novo'), 'tenta');
+  assert.equal(verboDe('Próxima aula'), null);
+  assert.equal(verboDe('Melhor opção'), null);
+  assert.equal(verboDe('Designer freela'), null);
+});
+
+test('chave pelo papel: título, sub, seção, botão, campo, alt, aria-label, vazio, aviso', async () => {
+  const root = club({
+    'app/(club)/conta/page.tsx': `'use client'
+import Link from 'next/link'
+export default function P({ toast }: { toast: { success: (m: string) => void } }) {
+  return (
+    <main>
+      <h1>Tua conta</h1>
+      <p>O que é teu aqui dentro.</p>
+      <section id="planos-pagos">
+        <h2>Planos</h2>
+        <p>Escolhe o que cabe.</p>
+      </section>
+      <h2>Outra coisa</h2>
+      <h3>Mais uma</h3>
+      <form>
+        <label htmlFor="email">Teu e-mail</label>
+        <input id="email" placeholder="Teu melhor e-mail" />
+        <input type="search" placeholder="Buscar por nome…" />
+        <button onClick={() => confirm('Excluir este item?')}>Salvar rascunho</button>
+        <button>Salvar e publicar</button>
+        <button onClick={() => toast.success('Salvo com sucesso!')}>Próxima aula</button>
+        <button aria-label="Fechar menu">x</button>
+      </form>
+      <nav aria-label="Navegação da conta" />
+      <Link href="/">Voltar pro início</Link>
+      <img id="retrato" src="/r.webp" alt="Retrato do dono" />
+      <div className="estado-vazio">
+        <h3>Nada por aqui.</h3>
+        <p>Volta mais tarde.</p>
+      </div>
+      <p>Tua conta</p>
+    </main>
+  )
+}
+`,
+  });
+  const r = await migrar(root, SEM_PORTOES);
+  assert.equal(r.ok, true, r.erro);
+  const j = lerJson(root, 'copy/conta.json');
+  const src = ler(root, 'app/(club)/conta/page.tsx');
+  /* `titulo` já existia ("Conta"): o h1 cai na regra antiga, sem sobrescrever. */
+  assert.equal(j.titulo, 'Conta');
+  assert.equal(j.tuaConta, 'Tua conta');
+  assert.equal(j.sub, 'O que é teu aqui dentro.');
+  assert.equal(j.planosPagos.titulo, 'Planos');
+  assert.equal(j.planosPagos.sub, 'Escolhe o que cabe.');
+  assert.equal(j.subtitulo, 'Outra coisa');
+  assert.equal(j.maisUma, 'Mais uma', 'segundo subtítulo: colisão cai na regra antiga');
+  assert.equal(j.email.rotulo, 'Teu e-mail');
+  assert.equal(j.email.placeholder, 'Teu melhor e-mail');
+  assert.equal(j.busca.placeholder, 'Buscar por nome…');
+  assert.equal(j.salvar, 'Salvar rascunho');
+  assert.equal(j.salvarEPublicar, 'Salvar e publicar', 'verbo ocupado: regra antiga');
+  assert.equal(j.acao, 'Próxima aula', 'botão sem verbo vira acao');
+  assert.equal(j.fechar.rotulo, 'Fechar menu');
+  assert.equal(j.menu.rotulo, 'Navegação da conta');
+  assert.equal(j.voltar, 'Voltar pro início');
+  assert.equal(j.retrato.alt, 'Retrato do dono');
+  assert.equal(j.vazio.titulo, 'Nada por aqui.');
+  assert.equal(j.vazio.sub, 'Volta mais tarde.');
+  assert.equal(j.aviso.excluir, 'Excluir este item?');
+  assert.equal(j.aviso.salvoCom, 'Salvo com sucesso!');
+  /* texto igual na mesma seção reaproveita a chave que já ganhou */
+  assert.match(src, /<p>\{t\('tuaConta'\)\}<\/p>/);
+  assert.match(src, /<label htmlFor="email">\{t\('email\.rotulo'\)\}<\/label>/);
+});
+
+test('texto que diz "nenhum" é estado vazio; componente Vazio dá o nome às props', async () => {
+  const root = club({
+    'app/(club)/biblioteca/page.tsx': `import { Vazio } from '@/components/Vazio'
+export default function P() {
+  return (
+    <div>
+      <p>Nenhum produto liberado ainda.</p>
+      <Vazio titulo="Nada aqui." texto="Volta depois." />
+    </div>
+  )
+}
+`,
+    'components/Vazio.tsx': 'export function Vazio({ titulo, texto }: { titulo: string; texto: string }) {\n  return <p>{titulo}{texto}</p>\n}\n',
+  });
+  const r = await migrar(root, SEM_PORTOES);
+  assert.equal(r.ok, true, r.erro);
+  const j = lerJson(root, 'copy/biblioteca.json');
+  assert.equal(j.vazio.titulo, 'Nenhum produto liberado ainda.');
+  assert.equal(j.vazio.sub, 'Volta depois.');
+  assert.equal(j.nadaAqui, 'Nada aqui.', 'vazio.titulo ocupado: regra antiga');
+});
+
+test('componente de vitrine (Card, Poster, Rail, Capa) usado por 2+ rotas vai pra catalogo', async () => {
+  const root = club({
+    'app/(club)/biblioteca/page.tsx': "import { PosterCard } from '@/components/PosterCard'\nexport default function P() {\n  return <PosterCard />\n}\n",
+    'app/(club)/conta/page.tsx': "import { PosterCard } from '@/components/PosterCard'\nexport default function P() {\n  return <PosterCard />\n}\n",
+    'components/PosterCard.tsx': 'export function PosterCard() {\n  return <span>Em andamento</span>\n}\n',
+  });
+  const r = await migrar(root, SEM_PORTOES);
+  assert.equal(r.ok, true, r.erro);
+  assert.match(ler(root, 'components/PosterCard.tsx'), /useTranslations\('catalogo'\)/);
+  assert.equal(lerJson(root, 'copy/catalogo.json').posterCard.emAndamento, 'Em andamento');
 });

@@ -49,6 +49,8 @@ const lerJson = (p) => {
 /* Arquivo que o migrar não abre: rota de API, teste, story, imagem gerada
    (ImageResponse), e o global-error (fica FORA do layout raiz, então fora do
    provider do next-intl). */
+const CATALOGO = /(Card|Poster|Rail|Capa|Billboard|Catalogo|Trilho|Vitrine|Deck)/;
+
 const FORA = [/\/api\//, /\.(test|spec|stories)\.tsx$/, /\/(opengraph-image|twitter-image|icon|apple-icon)\.tsx$/, /\/global-error\.tsx$/];
 
 function listar(dir, ext, saida = []) {
@@ -74,8 +76,10 @@ export function lugarNoApp(relApp) {
   const rota = est[0] || null;
   const secoes = est.slice(1);
   if (base !== 'page') secoes.push(base === 'loading' ? 'carregando' : base === 'not-found' ? 'naoEncontrado' : base);
-  const secao = secoes.length ? camel(secoes.join('-')) : null;
+  let secao = secoes.length ? camel(secoes.join('-')) : null;
   if (!rota) return { ns: base === 'page' ? 'inicio' : 'comum', secao: base === 'page' ? null : secao };
+  /* `definir-senha/DefinirSenha.tsx` não vira `definirSenha.definirSenha`. */
+  if (secao && secao.toLowerCase() === camel(rota).toLowerCase()) secao = null;
   return { ns: rota, secao };
 }
 
@@ -147,7 +151,9 @@ export async function migrar(root, opcoes = {}) {
   const lugar = new Map();
   for (const abs of alvos) if (ehApp(abs)) lugar.set(abs, lugarNoApp(relDe(abs).slice((base + 'app/').length)));
   /* Componente fora de app/: as rotas de quem importa (subindo pelos
-     componentes intermediários). Uma rota só → ela; mais de uma → comum. */
+     componentes intermediários). Uma rota só → ela; mais de uma → comum, ou
+     `catalogo` quando o nome do arquivo diz que é peça de vitrine (Card,
+     Poster, Rail, Capa...), como os agentes separaram no Club. */
   const memo = new Map();
   const rotasDe = (sf, pilha = new Set()) => {
     const abs = sf.getFilePath();
@@ -167,8 +173,9 @@ export async function migrar(root, opcoes = {}) {
   for (const abs of alvos) {
     if (lugar.has(abs)) continue;
     const rotas = rotasDe(project.getSourceFile(abs));
-    const ns = rotas.size === 1 ? [...rotas][0] : 'comum';
-    lugar.set(abs, { ns, secao: camel(basename(abs).replace(/\.[jt]sx?$/, '')) });
+    const ns = rotas.size === 1 ? [...rotas][0] : CATALOGO.test(basename(abs)) ? 'catalogo' : 'comum';
+    const sec = camel(basename(abs).replace(/\.[jt]sx?$/, ''));
+    lugar.set(abs, { ns, secao: sec.toLowerCase() === camel(ns).toLowerCase() ? null : sec });
   }
 
   /* ── mensagens que já existem ────────────────────────────────────────── */

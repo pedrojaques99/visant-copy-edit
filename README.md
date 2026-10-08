@@ -55,8 +55,16 @@ O que os 8 agentes fizeram à mão no Club em 07/10/2026, como codemod em AST (t
    pela detecção).
 2. **Texto**, em `app/**` e `components/**` (.tsx). Namespace = a rota (`app/(club)/biblioteca/...`
    → `biblioteca`); componente fora de `app/` vai pra rota de quem importa, e pra `comum` quando
-   mais de uma rota usa. Chave = `<seção>.<primeiras palavras em camelCase>` (a página da rota fica
-   sem seção). Texto IDÊNTICO: o espaço segue a regra do JSX, entidade vira caractere, número fora
+   mais de uma rota usa (`catalogo` se o arquivo é peça de vitrine: Card, Poster, Rail, Capa...).
+   Chave = `<seção>.<nome pelo papel>` (a página da rota fica sem seção; seção com o nome da rota
+   some). O papel do elemento decide antes das palavras (`migrar/nome.mjs`, regra simples, sem IA):
+   `h1` → `titulo`; `h2/h3` → `subtitulo`, ou `<secao>.titulo` dentro de `<section id>`; `p`/`span`
+   logo após o título → `sub`; botão/link → o verbo da 1ª palavra (`salvar`, `voltar`) ou `acao`;
+   `label` → `<campo>.rotulo`; `placeholder` → `<campo>.placeholder`; `alt` → `<nome>.alt`;
+   `aria-label` → `<nome>.rotulo`; estado vazio (Vazio/Empty, ou "nenhum"/"ainda não") →
+   `vazio.titulo`/`vazio.sub`; `confirm`/`toast` → `aviso.<verbo>`. O campo se chama pelo
+   `id`/`name`/`htmlFor`. Nome ocupado com outro texto → as primeiras palavras em camelCase (a
+   regra antiga), com sufixo numérico se também ocupar. Texto IDÊNTICO: o espaço segue a regra do JSX, entidade vira caractere, número fora
    de plural vai como `String(n)` (o ICU formataria 2026 como "2.026").
    - componente `async` → `const t = await getTranslations('rota')`; o resto → `useTranslations`
      (client ou server síncrono). `t` ocupado no arquivo vira `tr`.
@@ -79,7 +87,9 @@ O que os 8 agentes fizeram à mão no Club em 07/10/2026, como codemod em AST (t
    não é reescrita.
 
 Provado contra o Club de ANTES da 1ª onda (f282311): 630 textos em 83 arquivos (598 chaves),
-78% dos textos que os agentes migraram, tsc + eslint + 498 testes verdes. Detalhes no PLANO.
+78% dos textos que os agentes migraram, tsc + eslint + 498 testes verdes. Com o nome pelo papel,
+36 das 598 chaves batem pelo caminho inteiro com as dos agentes (eram 19); o resto diverge mais na
+SEÇÃO (`productsTable` × `produtos`), que os agentes renomearam à mão. Detalhes no PLANO.
 
 ## Ligar num app next-intl
 

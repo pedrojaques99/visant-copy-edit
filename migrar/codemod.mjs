@@ -19,7 +19,8 @@
  * `motivoDeLiteral`), nunca é chutado.
  */
 import { Node, SyntaxKind } from 'ts-morph';
-import { limparJsxText, decodificar, slugDeIcu, temLetra, ehDado, pareceTexto, icuLiteralInseguro, montarIcu } from './texto.mjs';
+import { candidatos } from './nome.mjs';
+import { limparJsxText, decodificar, slugDeIcu, textoForaDoIcu, temLetra, ehDado, pareceTexto, icuLiteralInseguro, montarIcu } from './texto.mjs';
 
 export const ATRIBUTOS_HTML = ['placeholder', 'aria-label', 'alt', 'title', 'aria-description', 'aria-placeholder', 'aria-roledescription', 'aria-valuetext', 'label'];
 /* Prop de componente que É texto lido. A lista é de nomes, não de tipos: um
@@ -163,15 +164,40 @@ const desembrulhar = (e) => {
 
 /* A árvore de mensagens: começa com o que já existe nos JSON e só ganha
    folha. Texto igual na mesma seção reaproveita a chave; chave ocupada com
-   outro texto ganha sufixo (nunca sobrescreve copy existente). */
+   outro texto ganha sufixo (nunca sobrescreve copy existente).
+
+   `candidatos` são os nomes pelo papel do elemento (migrar/nome.mjs), em
+   ordem, e podem ter ponto (`vazio.titulo`): vale o primeiro livre ou com o
+   mesmo texto. Todos ocupados → a regra antiga (`base`, as primeiras
+   palavras), com sufixo numérico se também estiver ocupada. */
 export class Mensagens {
   constructor(base = {}) {
     this.arvore = JSON.parse(JSON.stringify(base));
     this.novas = 0;
     this.reusos = 0;
     this.tocados = new Set();
+    this.porTexto = new Map(); // ns+seção+texto → chave já dada nesta rodada
   }
-  chave(ns, secao, base, texto) {
+  /* Tenta gravar `texto` no caminho dentro de `raiz`: 'novo', 'reuso' ou null (ocupado). */
+  #tentar(raiz, caminho, texto) {
+    const segs = caminho.split('.');
+    let no = raiz;
+    for (const s of segs.slice(0, -1)) {
+      if (no[s] === undefined) return this.#criar(raiz, segs, texto);
+      if (typeof no[s] !== 'object' || no[s] === null) return null;
+      no = no[s];
+    }
+    const v = no[segs.at(-1)];
+    if (v === undefined) return this.#criar(raiz, segs, texto);
+    return v === texto ? 'reuso' : null;
+  }
+  #criar(raiz, segs, texto) {
+    let no = raiz;
+    for (const s of segs.slice(0, -1)) no = no[s] ??= {};
+    no[segs.at(-1)] = texto;
+    return 'novo';
+  }
+  chave(ns, secao, base, texto, candidatos = []) {
     if (typeof this.arvore[ns] !== 'object' || this.arvore[ns] === null) this.arvore[ns] = {};
     let raiz = this.arvore[ns];
     let sec = secao;
@@ -181,21 +207,26 @@ export class Mensagens {
       raiz[sec] ??= {};
       raiz = raiz[sec];
     }
-    let nome = base;
-    for (let i = 1; ; ) {
-      const v = raiz[nome];
-      const chave = [sec, nome].filter(Boolean).join('.');
-      if (v === undefined) {
-        raiz[nome] = texto;
+    const mesmo = `${ns}|${sec}|${texto}`;
+    if (this.porTexto.has(mesmo)) {
+      this.reusos++;
+      return this.porTexto.get(mesmo);
+    }
+    const nomes = function* () {
+      yield* candidatos.filter(Boolean);
+      yield base;
+      for (let i = 2; ; i++) yield base + i;
+    };
+    for (const nome of nomes()) {
+      const r = this.#tentar(raiz, nome, texto);
+      if (!r) continue;
+      if (r === 'novo') {
         this.novas++;
         this.tocados.add(ns);
-        return chave;
-      }
-      if (v === texto) {
-        this.reusos++;
-        return chave;
-      }
-      nome = base + ++i;
+      } else this.reusos++;
+      const chave = [sec, nome].filter(Boolean).join('.');
+      this.porTexto.set(mesmo, chave);
+      return chave;
     }
   }
 }
@@ -342,7 +373,7 @@ export function analisarArquivo(sf, ctx) {
   function chamada(no, mensagem, vars, rich = []) {
     const nomeT = tDo(no);
     if (!nomeT) return null;
-    const chave = ctx.msgs.chave(ctx.ns, ctx.secao, slugDeIcu(mensagem), mensagem);
+    const chave = ctx.msgs.chave(ctx.ns, ctx.secao, slugDeIcu(mensagem), mensagem, candidatos(no, textoForaDoIcu(mensagem)));
     migrados++;
     const fn = rich.length ? `${nomeT}.rich` : nomeT;
     return `${fn}('${chave}'${objetoVars(vars, rich)})`;
