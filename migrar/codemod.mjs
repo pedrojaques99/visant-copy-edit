@@ -279,6 +279,13 @@ export function analisarArquivo(sf, ctx) {
     const fn = componenteDe(no);
     if (!fn) return null;
     if (componentes.has(fn)) return componentes.get(fn).nomeT;
+    /* O componente que MONTA o provider do i18n está acima dele: o hook ali
+       lança ("must be used within an I18nProvider") e derruba o site inteiro,
+       com tsc, eslint e teste verdes (o board quebrou assim no root-layout). */
+    if (montaProvider(fn)) {
+      ultimaFalha = `Componente que monta o provider do i18n: \`${A.hook}\` aqui fica fora do provider e lança; texto à mão ou num componente filho`;
+      return null;
+    }
     const corpo = fn.getBody();
     const args = A.ns ? `'${A.ns}'` : '';
     if (Node.isBlock(corpo)) {
@@ -315,6 +322,21 @@ export function analisarArquivo(sf, ctx) {
     componentes.set(fn, info);
     imports.add(A.hook);
     return local;
+  }
+  /* Nomes importados do módulo do i18n do repo (o do hook: `de`, ou o arquivo
+     do provider) que o componente usa como tag JSX. */
+  function montaProvider(fn) {
+    const base = A.arquivo ? A.arquivo.replace(/\.(tsx?|jsx?)$/, '').split('/').pop() : null;
+    const doI18n = new Set();
+    for (const imp of sf.getImportDeclarations()) {
+      const mod = imp.getModuleSpecifierValue();
+      const nomes = imp.getNamedImports().map((n) => n.getAliasNode()?.getText() ?? n.getName());
+      const ehDoI18n = nomes.includes(A.hook) || (A.de && mod === A.de) || (base && mod.split('/').pop() === base);
+      if (ehDoI18n) for (const n of nomes) if (n !== A.hook) doI18n.add(n);
+    }
+    if (!doI18n.size) return false;
+    const tags = [...fn.getDescendantsOfKind(SyntaxKind.JsxOpeningElement), ...fn.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement)];
+    return tags.some((t) => doI18n.has(t.getTagNameNode().getText()));
   }
   /* Livre no componente E no módulo (um `messages` de nível de módulo seria
      sombreado e o código de baixo passaria a ler a copy). */

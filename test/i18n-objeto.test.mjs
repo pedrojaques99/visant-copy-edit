@@ -440,3 +440,26 @@ test('migrar --ignorar: a área de fora não é migrada nem enche a revisão (ts
   assert.doesNotMatch(ler(root, 'app/sobre/Texto.tsx'), /Quem somos/);
   assert.doesNotMatch(ler(root, 'copy-edit-migrar.md'), /app\/admin/);
 });
+
+test('migrar com i18n de objeto: o componente que monta o provider não ganha o hook (lançaria fora do provider)', async () => {
+  const root = board({
+    'app/_components/Casca.tsx': `"use client";
+import { I18nProvider } from "@/context/i18n-context";
+export function Casca({ children }: { children: React.ReactNode }) {
+  return (
+    <I18nProvider>
+      <a href="#main">Pular para o conteúdo</a>
+      {children}
+    </I18nProvider>
+  );
+}
+`,
+  });
+  writeFileSync(join(root, 'copy-edit.config.mjs'), `export default ${JSON.stringify({ adapter: 'i18n-objeto', opcoes: detectar(root).opcoes })}\n`);
+  const r = await migrar(root, SEM_PORTOES);
+  assert.equal(r.ok, true, r.erro);
+  const casca = ler(root, 'app/_components/Casca.tsx');
+  assert.doesNotMatch(casca, /useI18n/);
+  assert.match(casca, /Pular para o conteúdo/);
+  assert.match(ler(root, 'copy-edit-migrar.md'), /## Componente que monta o provider do i18n[^\n]*\n\n- `app\/_components\/Casca\.tsx:\d+` "Pular para o conteúdo"/);
+});
