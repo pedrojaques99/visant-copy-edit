@@ -1,0 +1,25 @@
+{
+  "name": "@visant/copy-edit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Editor local de copy da Visant: a barra (texto, token, comentário pra IA) e o servidor 127.0.0.1, com adapter por repo.",
+  "type": "module",
+  "bin": {
+    "copy-edit": "bin/copy-edit.mjs"
+  },
+  "files": [
+    "bin",
+    "server",
+    "client",
+    "adapters"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@vercel/stega": "^1.1.0"
+  }
+}
