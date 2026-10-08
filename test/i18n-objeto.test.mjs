@@ -395,3 +395,34 @@ test('migrar recusa i18n de objeto sem acessor, sem gravar nada', async () => {
   assert.match(r2.erro, /acessor/);
   assert.equal(ler(root2, 'app/page.tsx'), 'export default function P() { return <p>Oi</p> }\n');
 });
+
+test('migrar com i18n de objeto: JSX já em inglês vai com o original pro en e quem vira "traduzir" é o pt-br', async () => {
+  const root = board({
+    'app/conta/Senha.tsx': `"use client";
+export function Senha() {
+  return (
+    <form>
+      <h1>Reset Password</h1>
+      <p>Esqueci a minha senha</p>
+      <button>Save</button>
+    </form>
+  );
+}
+`,
+  });
+  writeFileSync(join(root, 'copy-edit.config.mjs'), `export default ${JSON.stringify({ adapter: 'i18n-objeto', opcoes: detectar(root).opcoes })}\n`);
+  const r = await migrar(root, SEM_PORTOES);
+  assert.equal(r.ok, true, r.erro);
+  const pt = lerObjeto(ler(root, 'locales/pt-br.ts'), 'pt-br.ts', { exportar: 'messages' });
+  const en = lerObjeto(ler(root, 'locales/en.ts'), 'en.ts', { exportar: 'messages' });
+  const k = [...en.folhas.keys()].find((c) => en.folhas.get(c).valor === 'Reset Password');
+  assert.ok(k, 'o original em inglês está no en');
+  assert.equal(pt.folhas.get(k).valor, 'Reset Password', 'o pt-br ganha o mesmo texto, pra tradução');
+  /* "Reset Password" sai do en pro pt; "Esqueci…" e "Save" (palavra única, ambígua) seguem pt → en */
+  assert.deepEqual(r.resumo.traduzirPor, { 'en→pt-br': 1, 'pt-br→en': 2 });
+  const md = ler(root, 'copy-edit-migrar.md');
+  assert.match(md, /## Traduzir pro pt-br \(entrou com o texto em en\) \(1\)/);
+  assert.ok(md.includes(`"${k}: Reset Password"`) && /`locales\/pt-br\.ts:\d+` "conta\.senha\.[a-z]+: Reset Password"/.test(md));
+  assert.match(md, /## Traduzir pro en \(entrou com o texto em pt-br\) \(2\)/);
+  assert.match(md, /en→pt-br: 1/);
+});

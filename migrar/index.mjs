@@ -25,6 +25,7 @@ import { detectar } from '../server/detectar.mjs';
 import { analisarArquivo, literaisSobrando, motivoDeLiteral, Mensagens, ATRIBUTOS_HTML, ATRIBUTOS_COMPONENTE } from './codemod.mjs';
 import { montarInfra, acrescentarIndex, identificador } from './infra.mjs';
 import { camel } from './texto.mjs';
+import { detectarIdioma } from './idioma.mjs';
 import { LINT_PADRAO } from '../server/nucleo.mjs';
 import { lerObjeto, inserirChaves } from '../writers/objeto.mjs';
 
@@ -428,22 +429,33 @@ export async function migrar(root, opcoes = {}) {
   if (formato === 'locale' && achado.opcoes.locales.length > 1)
     r.revisao.push({ arq: arqLocale, linha: 1, motivo: 'Outros idiomas', trecho: `as chaves novas entraram só em ${arqLocale}; ${achado.opcoes.locales.filter((l) => l !== achado.opcoes.localePadrao).join(', ')} precisam da tradução` });
   let traduzir = 0;
+  const traduzirPor = {}; // 'pt-br→en': n, 'en→pt-br': m
   if (OBJ) {
     if (r.erroObjeto) r.revisao.push({ arq: '(idiomas)', linha: 1, motivo: 'Arquivo de idioma que não consegui escrever', trecho: r.erroObjeto });
     const valores = new Map(folhasNovas(r.msgs.arvore, OBJ.base));
+    /* Parte do JSX já vem em inglês ("Reset Password"). O texto entra igual em
+       todos os idiomas (o tipo exige a chave em todos), mas a ORIGEM muda: se
+       a heurística (migrar/idioma.mjs) diz "en" com folga e o repo tem um
+       idioma en, o en fica com o original e quem vai pra tradução é o padrão.
+       Na dúvida, null, e vale o padrão como antes. */
+    const idiomaEn = OBJ.padrao.toLowerCase().startsWith('en') ? null : OBJ.outros.find((l) => /^en(-|_|$)/i.test(l));
+    const origemDe = (k) => (idiomaEn && detectarIdioma(valores.get(k)) === 'en' ? idiomaEn : OBJ.padrao);
     for (const [l, ins] of Object.entries(r.insercoes || {})) {
       for (const c of ins.conflitos) r.revisao.push({ arq: ins.arq, linha: 1, motivo: `Chave nova que não entrou em ${l} (o caminho já existe lá)`, trecho: `${c.chave}: ${c.motivo}` });
-      if (l === OBJ.padrao) continue;
       for (const k of ins.inseridas) {
+        const origem = origemDe(k);
+        if (l === origem) continue;
         traduzir++;
-        r.revisao.push({ arq: ins.arq, linha: ins.linhas.get(k) || 1, motivo: `Traduzir pro ${l} (entrou com o texto em ${OBJ.padrao})`, trecho: `${k}: ${valores.get(k)}` });
+        const dir = `${origem}→${l}`;
+        traduzirPor[dir] = (traduzirPor[dir] || 0) + 1;
+        r.revisao.push({ arq: ins.arq, linha: ins.linhas.get(k) || 1, motivo: `Traduzir pro ${l} (entrou com o texto em ${origem})`, trecho: `${k}: ${valores.get(k)}` });
       }
     }
   }
 
   const resumo = {
     modo: OBJ ? 'texto no i18n do repo' : setup ? 'infra + texto' : 'texto',
-    ...(OBJ ? { arquivoPadrao: OBJ.alvo[OBJ.padrao], chavesNoLocale: r.insercoes?.[OBJ.padrao]?.inseridas.length || 0, traduzir, outros: OBJ.outros } : {}),
+    ...(OBJ ? { arquivoPadrao: OBJ.alvo[OBJ.padrao], chavesNoLocale: r.insercoes?.[OBJ.padrao]?.inseridas.length || 0, traduzir, traduzirPor, outros: OBJ.outros } : {}),
     arquivos: r.mudados.size,
     migrados: r.migrados,
     chavesNovas: r.msgs.novas,
@@ -686,6 +698,8 @@ function separarDetalhe(motivo) {
   return { motivo, detalhe: '' };
 }
 
+const dirs = (por) => Object.entries(por || {}).map(([d, n]) => `, ${d}: ${n}`).join('');
+
 function relatorio(resumo, revisao, dry) {
   const porMotivo = new Map();
   for (const it of revisao) {
@@ -700,7 +714,7 @@ function relatorio(resumo, revisao, dry) {
 ${dry ? 'Rodada seca (`--dry`): nada foi gravado.' : 'Gerado pelo `copy-edit migrar` (pacote @visant/copy-edit).'}
 
 - ${resumo.migrados} textos migrados em ${resumo.arquivos} arquivos (${resumo.chavesNovas} chaves novas, ${resumo.reusos} reaproveitadas)
-${resumo.arquivoPadrao ? `- i18n do repo: ${resumo.chavesNoLocale} chaves entram em ${resumo.arquivoPadrao}; ${resumo.outros.join(', ') || 'nenhum outro idioma'} ganha o mesmo texto, ${resumo.traduzir} pra traduzir (abaixo)\n` : ''}- por namespace: ${ns || 'nenhum'}
+${resumo.arquivoPadrao ? `- i18n do repo: ${resumo.chavesNoLocale} chaves entram em ${resumo.arquivoPadrao}; ${resumo.outros.join(', ') || 'nenhum outro idioma'} ganha o mesmo texto, ${resumo.traduzir} pra traduzir (abaixo${dirs(resumo.traduzirPor)})\n` : ''}- por namespace: ${ns || 'nenhum'}
 - ${resumo.revisao} itens pra revisão (abaixo), ${resumo.barrados} arquivo(s) barrados pela checagem de tipo
 ${resumo.namespacesNovos.length ? `- namespaces novos: ${resumo.namespacesNovos.join(', ')}\n` : ''}${resumo.notas.map((n) => `- ${n}\n`).join('')}
 O que está aqui NÃO foi migrado de propósito: não é óbvio, e chutar é pior que deixar.

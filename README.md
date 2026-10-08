@@ -128,7 +128,12 @@ O editor trabalha EM CIMA do i18n do repo, sem converter pra next-intl, e os idi
   padrão (pt) e usa o ACESSOR do repo (`const { messages } = useI18n()` + `messages.rota.chave`,
   ou `t('rota.chave')` do i18next com `{{var}}`), detectado pelo uso no repo ou escrito na config
   (`acessor: { hook, de, campo, forma }`). Os outros idiomas ganham a chave com o MESMO texto em
-  pt e cada uma vai pra revisão como "Traduzir pro en". Componente de servidor num i18n
+  pt e cada uma vai pra revisão como "Traduzir pro en". Texto do JSX que já está em INGLÊS
+  ("Reset Password") faz o caminho inverso: o en fica com o original e o pt vai pra revisão como
+  "Traduzir pro pt-br". Quem decide é `migrar/idioma.mjs`, heurística sem IA nem rede (palavra
+  funcional e de interface, acento, terminação), que só diz "en" com folga: palavra única, nome
+  próprio e número ficam no padrão. Medida: 0 pt chamado de en em 473 textos do board + 986 do
+  Club, 86% do en de 2+ palavras reconhecido (`franc-min` chamou 50 dos 473 pt de inglês). Componente de servidor num i18n
   client-only, texto com variável num i18n de objeto e plural vão pra revisão com o motivo.
 
 ## Token e estilo (`writers/css-token`)
@@ -164,6 +169,7 @@ server/marcar.mjs        marcarMensagens/marcarLocales + o trecho que o `ligar` 
 writers/css-token.mjs    token na folha + estilo (na folha ou na fila)
 lint/copy-lint.mjs       o lint padrão (vendor da skill)
 migrar/                  `copy-edit migrar`: codemod (ts-morph), infra do next-intl, portões
+migrar/idioma.mjs        o texto do JSX está em en? (heurística, só com folga)
 ```
 
 `npm test` roda núcleo, adapters, writer, detecção e migrar gravando em diretório temporário.
