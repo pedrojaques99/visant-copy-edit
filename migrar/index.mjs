@@ -14,7 +14,8 @@
  * `--dry` faz 1–4, escreve o diff e a revisão numa pasta temporária, e não
  * toca no repo.
  */
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, mkdtempSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, mkdtempSync, statSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { join, relative, dirname, basename, extname, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -25,6 +26,7 @@ import { analisarArquivo, literaisSobrando, motivoDeLiteral, Mensagens, ATRIBUTO
 import { montarInfra, acrescentarIndex, identificador } from './infra.mjs';
 import { camel } from './texto.mjs';
 import { LINT_PADRAO } from '../server/nucleo.mjs';
+import { lerObjeto, inserirChaves } from '../writers/objeto.mjs';
 
 const barra = (p) => p.replace(/\\/g, '/');
 
@@ -94,21 +96,37 @@ export async function migrar(root, opcoes = {}) {
   const appDir = join(root, base + 'app');
   if (!existsSync(appDir)) return { ok: false, erro: 'não achei app/ (o migrar é pro App Router)' };
 
-  /* ── modo: next-intl já existe (só migra texto) ou monta a infra ─────── */
-  const achado = detectar(root);
+  /* ── modo: next-intl já existe (só migra texto), i18n próprio do repo
+     (escreve no arquivo de idioma dele, com o acessor dele), ou monta a infra ── */
+  const achado = await achadoDoRepo(root);
   let setup = false;
   let formato, pasta, arqLocale;
-  if (achado.adapter === 'next-intl') {
+  let OBJ = null;
+  if (achado.adapter === 'i18n-objeto') {
+    formato = 'objeto';
+    OBJ = prepararObjeto(root, achado.opcoes);
+    if (OBJ.erro) return { ok: false, erro: OBJ.erro };
+  } else if (achado.adapter === 'next-intl') {
     ({ formato, pasta } = achado.opcoes);
     if (formato === 'locale') arqLocale = `${pasta}/${achado.opcoes.localePadrao}.json`;
   } else if (deps['next-intl']) {
     return { ok: false, erro: `o repo tem next-intl, mas: ${achado.motivo}` };
+  } else if (deps.i18next || deps['react-i18next'] || deps['next-i18next']) {
+    /* Repo com i18n que a detecção não entendeu: montar next-intl por cima
+       duplicaria a fonte da copy. Melhor parar e pedir a config. */
+    return { ok: false, erro: `o repo já tem i18n (i18next), mas: ${achado.motivo || 'a detecção não fechou'}. Escreva copy-edit.config.mjs com adapter 'i18n-objeto' (locales, localePadrao, acessor).` };
   } else {
     setup = true;
     formato = 'rota';
     pasta = `${base}copy`;
   }
-  log(setup ? 'sem next-intl: monto a infra do Club (um idioma, copy/<rota>.json)' : `next-intl já existe: formato ${formato}, mensagens em ${pasta}`);
+  log(
+    OBJ
+      ? `i18n do repo: chaves novas em ${OBJ.alvo[OBJ.padrao]} (${OBJ.padrao}), lidas por \`${OBJ.acessor.forma === 'objeto' ? `${OBJ.acessor.campo}.a.b` : `${OBJ.acessor.campo}('a.b')`}\`; ${OBJ.outros.join(', ') || 'nenhum outro idioma'} ganha o mesmo texto e vai pra revisão`
+      : setup
+        ? 'sem next-intl: monto a infra do Club (um idioma, copy/<rota>.json)'
+        : `next-intl já existe: formato ${formato}, mensagens em ${pasta}`
+  );
 
   /* Instalar vem ANTES da análise quando grava: a checagem de tipo em
      memória precisa dos tipos do next-intl. No --dry nada é instalado. */
@@ -189,7 +207,47 @@ export async function migrar(root, opcoes = {}) {
     }
   } else if (formato === 'locale') {
     Object.assign(baseMsgs, lerJson(join(root, arqLocale)) || {});
+  } else if (OBJ) {
+    Object.assign(baseMsgs, OBJ.base);
+    /* Rota cujo nome já é um TEXTO ou lista no objeto do repo (`about: "Sobre"`)
+       não pode virar seção: a chave nova esmagaria a copy que existe. */
+    for (const [abs, l] of lugar) {
+      let ns = l.ns;
+      for (let i = 1; typeof baseMsgs[ns] === 'string' || Array.isArray(baseMsgs[ns]); i++) ns = `${l.ns}Pagina${i > 1 ? i : ''}`;
+      if (ns !== l.ns) lugar.set(abs, { ...l, ns });
+    }
   }
+
+  /* Componente de servidor num i18n que só existe no client (hook): não dá pra
+     chamar `useI18n()` lá, e o arquivo vai inteiro pra revisão com o motivo.
+     Servidor = sem 'use client' E (página/layout do app, ou algum importador é
+     servidor, ou ninguém importa). Calculado ANTES do codemod, no texto original. */
+  const servidores = new Set();
+  if (OBJ) {
+    const memo = new Map();
+    const ESPECIAIS = /\/(page|layout|template|loading|not-found|default|error)\.[jt]sx?$/;
+    const USE_CLIENT = /^(\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*['"]use client['"]/;
+    const ehServidor = (sf, pilha = new Set()) => {
+      const abs = sf.getFilePath();
+      if (memo.has(abs)) return memo.get(abs);
+      let r;
+      if (USE_CLIENT.test(sf.getFullText())) r = false;
+      else if (ESPECIAIS.test('/' + relDe(abs))) r = true;
+      else if (pilha.has(abs)) return false;
+      else {
+        pilha.add(abs);
+        const quem = sf.getReferencingSourceFiles();
+        r = !quem.length || quem.some((q) => ehServidor(q, pilha));
+        pilha.delete(abs);
+      }
+      memo.set(abs, r);
+      return r;
+    };
+    for (const abs of alvos) if (ehServidor(project.getSourceFile(abs))) servidores.add(abs);
+  }
+  const MOTIVO_SERVIDOR = OBJ
+    ? `Componente de servidor e o i18n do repo é só client (\`${OBJ.acessor.hook}\` é hook): vire client ('use client') ou receba o texto por prop`
+    : null;
 
   /* ── o codemod, com a checagem de tipo em memória ────────────────────── */
   const originais = new Map(alvos.map((a) => [a, project.getSourceFile(a).getFullText()]));
@@ -198,7 +256,9 @@ export async function migrar(root, opcoes = {}) {
   const atributosComponente = new Set(ATRIBUTOS_COMPONENTE);
   const barrados = new Map(); // abs → motivo (não compilou em memória)
   let rodada;
-  const checar = opcoes.checarTipos !== false && (instalado() || !setup) && existsSync(join(root, 'node_modules', 'next-intl'));
+  const checar =
+    opcoes.checarTipos !== false &&
+    (OBJ ? existsSync(join(root, 'node_modules')) : (instalado() || !setup) && existsSync(join(root, 'node_modules', 'next-intl')));
   for (let volta = 0; volta < 4; volta++) {
     rodada = rodar();
     if (!checar) break;
@@ -233,6 +293,8 @@ export async function migrar(root, opcoes = {}) {
         marcas,
         atributosHtml,
         atributosComponente,
+        acessor: OBJ?.acessor,
+        servidor: servidores.has(abs) ? MOTIVO_SERVIDOR : null,
         revisao: (no, motivo, trecho) => revisao.push({ arq: relDe(abs), linha: no.getStartLineNumber(), motivo, trecho }),
       });
       editadosPorArq.set(abs, r.editados);
@@ -243,7 +305,7 @@ export async function migrar(root, opcoes = {}) {
       for (const lit of literaisSobrando(sf, r.editados))
         revisao.push({ arq: relDe(abs), linha: lit.getStartLineNumber(), motivo: motivoDeLiteral(lit, { servidor }), trecho: textoDe(lit) });
       if (!r.edicoes.length) continue;
-      r.edicoes.push(...editarImports(sf, r.imports, r.eol, r.pontoVirgula));
+      r.edicoes.push(...editarImports(sf, r.imports, r.eol, r.pontoVirgula, OBJ ? (nome) => moduloDoAcessor(OBJ.acessor, root, abs) : undefined));
       mudados.set(abs, aplicar(originais.get(abs), r.edicoes));
       migrados += r.migrados;
       porNs[ns] = (porNs[ns] || 0) + (msgs.novas + msgs.reusos - antes);
@@ -315,6 +377,31 @@ export async function migrar(root, opcoes = {}) {
         if (!novo) r.erroIndex = `${idx} não tem a forma esperada (export const COPY = { ... }): acrescente à mão os namespaces ${novos.join(', ')}`;
         else saidas.set(idx, novo);
       }
+    } else if (OBJ) {
+      /* i18n do repo: as folhas novas entram no arquivo do idioma padrão E,
+         com o MESMO texto, nos outros idiomas (o tipo do board é
+         `typeof ptBrMessages`, e o en sem a chave nem compila). Tradução não se
+         inventa: cada uma vai pra revisão como "traduzir". Um parse e uma
+         inserção por arquivo (writers/objeto.mjs), comentário e aspas intactos. */
+      const novas = folhasNovas(r.msgs.arvore, OBJ.base);
+      r.insercoes = {};
+      if (novas.length) {
+        for (const l of [OBJ.padrao, ...OBJ.outros]) {
+          const arq = OBJ.alvo[l];
+          const atual = ler(join(root, arq)) ?? (arq.endsWith('.json') ? '{}\n' : null);
+          if (atual === null) {
+            r.erroObjeto = `${arq} (${l}) não existe`;
+            continue;
+          }
+          const ins = inserirChaves(atual, arq, novas, { exportar: OBJ.exportar });
+          if (ins.erro) {
+            r.erroObjeto = ins.erro;
+            continue;
+          }
+          r.insercoes[l] = { arq, ...ins };
+          saidas.set(arq, ins.texto);
+        }
+      }
     } else if (tocados.length) {
       const eolJ = (ler(join(root, arqLocale)) || '').includes('\r\n') ? '\r\n' : '\n';
       saidas.set(arqLocale, JSON.stringify(r.msgs.arvore, null, 2).replace(/\n/g, eolJ) + eolJ);
@@ -340,9 +427,23 @@ export async function migrar(root, opcoes = {}) {
   if (r.infra) for (const e of r.infra.erros) r.revisao.push({ arq: '(infra)', linha: 1, motivo: 'Infra do next-intl que não montei sozinho', trecho: e });
   if (formato === 'locale' && achado.opcoes.locales.length > 1)
     r.revisao.push({ arq: arqLocale, linha: 1, motivo: 'Outros idiomas', trecho: `as chaves novas entraram só em ${arqLocale}; ${achado.opcoes.locales.filter((l) => l !== achado.opcoes.localePadrao).join(', ')} precisam da tradução` });
+  let traduzir = 0;
+  if (OBJ) {
+    if (r.erroObjeto) r.revisao.push({ arq: '(idiomas)', linha: 1, motivo: 'Arquivo de idioma que não consegui escrever', trecho: r.erroObjeto });
+    const valores = new Map(folhasNovas(r.msgs.arvore, OBJ.base));
+    for (const [l, ins] of Object.entries(r.insercoes || {})) {
+      for (const c of ins.conflitos) r.revisao.push({ arq: ins.arq, linha: 1, motivo: `Chave nova que não entrou em ${l} (o caminho já existe lá)`, trecho: `${c.chave}: ${c.motivo}` });
+      if (l === OBJ.padrao) continue;
+      for (const k of ins.inseridas) {
+        traduzir++;
+        r.revisao.push({ arq: ins.arq, linha: ins.linhas.get(k) || 1, motivo: `Traduzir pro ${l} (entrou com o texto em ${OBJ.padrao})`, trecho: `${k}: ${valores.get(k)}` });
+      }
+    }
+  }
 
   const resumo = {
-    modo: setup ? 'infra + texto' : 'texto',
+    modo: OBJ ? 'texto no i18n do repo' : setup ? 'infra + texto' : 'texto',
+    ...(OBJ ? { arquivoPadrao: OBJ.alvo[OBJ.padrao], chavesNoLocale: r.insercoes?.[OBJ.padrao]?.inseridas.length || 0, traduzir, outros: OBJ.outros } : {}),
     arquivos: r.mudados.size,
     migrados: r.migrados,
     chavesNovas: r.msgs.novas,
@@ -350,7 +451,7 @@ export async function migrar(root, opcoes = {}) {
     revisao: r.revisao.length,
     barrados: barrados.size,
     porNs: r.porNs,
-    namespacesNovos: [...r.msgs.tocados].filter((ns) => !nsExistentes.has(ns)).sort(),
+    namespacesNovos: [...r.msgs.tocados].filter((ns) => (OBJ ? !(ns in OBJ.base) : !nsExistentes.has(ns))).sort(),
     notas: [...(achado.notas || []).filter((n) => /ATENÇÃO/.test(n)), ...(r.infra?.notas || [])],
   };
   const md = relatorio(resumo, r.revisao, dry);
@@ -372,6 +473,9 @@ export async function migrar(root, opcoes = {}) {
     restaurar(root, snapshot);
     return { ok: false, erro: `não montei a infra do next-intl:\n  · ${r.infra.erros.join('\n  · ')}`, resumo };
   }
+  /* Componente lendo chave que não entrou no arquivo de idioma não compila
+     (ou mostra undefined): sem todos os idiomas escritos, não grava nada. */
+  if (r.erroObjeto) return { ok: false, erro: `não escrevi os arquivos de idioma: ${r.erroObjeto}`, resumo };
 
   /* ── grava ──────────────────────────────────────────────────────────── */
   const tocadosTsx = [...r.mudados.keys()].map(relDe);
@@ -412,6 +516,72 @@ export async function migrar(root, opcoes = {}) {
   return { ok: true, resumo, portoes, revisaoArq: join(root, 'copy-edit-migrar.md'), gravados: [...saidas.keys()] };
 }
 
+/* ── i18n do repo ─────────────────────────────────────────────────────── */
+
+/* A config do repo manda (o acessor pode ter sido escrito à mão porque a
+   detecção não teve certeza); sem config, a detecção. */
+async function achadoDoRepo(root) {
+  const detectado = detectar(root);
+  const arq = join(root, 'copy-edit.config.mjs');
+  if (!existsSync(arq)) return detectado;
+  const config = (await import(pathToFileURL(arq).href + '?t=' + Date.now())).default;
+  if (config?.adapter !== 'i18n-objeto') return detectado;
+  return { adapter: 'i18n-objeto', opcoes: { ...(detectado.adapter === 'i18n-objeto' ? detectado.opcoes : {}), ...config.opcoes }, notas: detectado.notas || [] };
+}
+
+/* Arquivo-alvo por idioma, a árvore que já existe no idioma padrão e o
+   acessor. Pasta de idioma (i18next) = o JSON do namespace do acessor. */
+export function prepararObjeto(root, op) {
+  const locales = op.locales || {};
+  const idiomas = Object.keys(locales);
+  if (!idiomas.length) return { erro: 'i18n-objeto sem `locales` na config' };
+  const A = op.acessor;
+  if (!A?.hook || !A.campo || !['objeto', 'funcao'].includes(A.forma)) {
+    return { erro: 'não sei como os componentes deste repo leem a copy. Escreva na copy-edit.config.mjs: acessor: { hook: "useI18n", de: "@/context/i18n-context", campo: "messages", forma: "objeto" } (ou forma "funcao" pra `t(\'a.b\')`)' };
+  }
+  if (!A.de && !A.arquivo) return { erro: 'o acessor precisa de `de` (o módulo do hook, ex. "@/context/i18n-context") ou `arquivo` (o caminho do provider)' };
+  const padrao = op.localePadrao && locales[op.localePadrao] ? op.localePadrao : idiomas[0];
+  const alvo = {};
+  for (const l of idiomas) {
+    const p = locales[l];
+    let ehPasta = false;
+    try {
+      ehPasta = statSync(join(root, p)).isDirectory();
+    } catch {
+      /* não existe: tratado abaixo */
+    }
+    alvo[l] = ehPasta ? `${p}/${A.ns || 'common'}.json` : p;
+  }
+  const textoPadrao = ler(join(root, alvo[padrao])) ?? (alvo[padrao].endsWith('.json') ? '{}' : null);
+  if (textoPadrao === null) return { erro: `${alvo[padrao]} (idioma padrão) não existe` };
+  const lido = lerObjeto(textoPadrao, alvo[padrao], { exportar: op.exportar });
+  if (lido.erro) return { erro: lido.erro };
+  return { padrao, outros: idiomas.filter((l) => l !== padrao), alvo, base: lido.arvore, acessor: A, exportar: op.exportar };
+}
+
+/* O módulo de onde o arquivo importa o hook: o alias que o repo usa
+   (`@/context/i18n-context`), o pacote (`react-i18next`), ou o caminho
+   relativo até o provider. */
+function moduloDoAcessor(A, root, abs) {
+  if (A.de) return A.de;
+  let r = barra(relative(dirname(abs), join(root, A.arquivo))).replace(/\.(tsx?|jsx?)$/, '');
+  return r.startsWith('.') ? r : './' + r;
+}
+
+/* [[chave, valor]] das folhas de texto que existem em `nova` e não em `base`. */
+export function folhasNovas(nova, base) {
+  const plano = (o, p, saida) => {
+    for (const [k, v] of Object.entries(o || {})) {
+      const c = p ? `${p}.${k}` : k;
+      if (typeof v === 'string') saida.set(c, v);
+      else if (v && typeof v === 'object') plano(v, c, saida);
+    }
+    return saida;
+  };
+  const antes = plano(base, '', new Map());
+  return [...plano(nova, '', new Map())].filter(([k]) => !antes.has(k));
+}
+
 /* ── peças ────────────────────────────────────────────────────────────── */
 
 function textoDe(lit) {
@@ -436,10 +606,10 @@ export function aplicar(texto, edicoes) {
 /* import { useTranslations } from 'next-intl' / { getTranslations } from
    'next-intl/server': junta no import que já existe, senão linha nova depois
    do último import (ou depois do 'use client'). */
-function editarImports(sf, nomes, eol, semi) {
+function editarImports(sf, nomes, eol, semi, moduloDe) {
   const ed = [];
   for (const nome of nomes) {
-    const mod = nome === 'getTranslations' ? 'next-intl/server' : 'next-intl';
+    const mod = moduloDe ? moduloDe(nome) : nome === 'getTranslations' ? 'next-intl/server' : 'next-intl';
     const existente = sf.getImportDeclarations().find((d) => d.getModuleSpecifierValue() === mod && !d.isTypeOnly());
     if (existente?.getNamedImports().some((n) => n.getName() === nome)) continue;
     const ni = existente?.getNamedImports();
@@ -447,7 +617,9 @@ function editarImports(sf, nomes, eol, semi) {
       ed.push({ ini: ni.at(-1).getEnd(), fim: ni.at(-1).getEnd(), texto: `, ${nome}` });
       continue;
     }
-    const linha = `import { ${nome} } from '${mod}'${semi ? ';' : ''}`;
+    /* aspas da casa: as do 1º import, ou as da diretiva 'use client' */
+    const q = (sf.getImportDeclarations()[0]?.getModuleSpecifier().getText() || sf.getFullText().match(/^\s*(['"])use client/)?.[1] || "'")[0];
+    const linha = `import { ${nome} } from ${q}${mod}${q}${semi ? ';' : ''}`;
     const imps = sf.getImportDeclarations();
     if (imps.length) ed.push({ ini: imps.at(-1).getEnd(), fim: imps.at(-1).getEnd(), texto: eol + linha });
     else {
@@ -528,7 +700,7 @@ function relatorio(resumo, revisao, dry) {
 ${dry ? 'Rodada seca (`--dry`): nada foi gravado.' : 'Gerado pelo `copy-edit migrar` (pacote @visant/copy-edit).'}
 
 - ${resumo.migrados} textos migrados em ${resumo.arquivos} arquivos (${resumo.chavesNovas} chaves novas, ${resumo.reusos} reaproveitadas)
-- por namespace: ${ns || 'nenhum'}
+${resumo.arquivoPadrao ? `- i18n do repo: ${resumo.chavesNoLocale} chaves entram em ${resumo.arquivoPadrao}; ${resumo.outros.join(', ') || 'nenhum outro idioma'} ganha o mesmo texto, ${resumo.traduzir} pra traduzir (abaixo)\n` : ''}- por namespace: ${ns || 'nenhum'}
 - ${resumo.revisao} itens pra revisão (abaixo), ${resumo.barrados} arquivo(s) barrados pela checagem de tipo
 ${resumo.namespacesNovos.length ? `- namespaces novos: ${resumo.namespacesNovos.join(', ')}\n` : ''}${resumo.notas.map((n) => `- ${n}\n`).join('')}
 O que está aqui NÃO foi migrado de propósito: não é óbvio, e chutar é pior que deixar.

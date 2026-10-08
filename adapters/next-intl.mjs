@@ -50,7 +50,6 @@
  *   avisoEstilo      o erro de token quando não há `tokens`
  */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
-import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { vercelStegaClean } from '@vercel/stega';
 import {
@@ -58,6 +57,7 @@ import {
   normalizarValor,
   rodarLint,
   cabecalhoComentarios,
+  subirNextDev,
 } from '../server/nucleo.mjs';
 import { listarTokens, salvarToken, estiloNaFila } from '../writers/css-token.mjs';
 
@@ -235,19 +235,7 @@ export function criar(root, op = {}) {
 
   /* O `next dev` vem junto, com a flag que liga a chave invisível e o rewrite. */
   function aoSubir(p, sair) {
-    let next = null;
-    if (op.dev !== false) {
-      next = spawn(
-        process.execPath,
-        [join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'dev', '-p', String(portaDev)],
-        {
-          cwd: root,
-          stdio: 'inherit',
-          env: { ...process.env, COPY_EDIT: '1', COPY_EDIT_PORTA: String(p) },
-        }
-      );
-      next.on('exit', sair);
-    }
+    const parar = op.dev === false ? () => {} : subirNextDev(root, { porta: p, portaDev, sair });
     console.log('');
     console.log(`  Editor de copy no ar: http://localhost:${portaDev}${op.rotaInicial || RAIZ}`);
     if (FORMATO === 'rota') console.log(`  Só as rotas que já têm ${PASTA}/<rota>.json ficam editáveis.`);
@@ -258,7 +246,7 @@ export function criar(root, op = {}) {
     console.log('  Trocar de página pelo menu não reinicia a barra: navegue com F5.');
     console.log('  Cada save escreve o json e passa o copy-lint. Commit é teu.');
     console.log('');
-    return () => next && next.kill();
+    return parar;
   }
 
   return {

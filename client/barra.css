@@ -176,6 +176,15 @@
   border-radius: 2px;
   padding: 6px 8px;
 }
+/* Repo com um arquivo por idioma: de qual idioma é a lista (e onde grava). */
+.ce-idioma {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ce-line);
+  color: var(--ce-fg);
+}
+.ce-idioma[hidden] {
+  display: none;
+}
 .ce-lista {
   overflow: auto;
   padding: 6px 12px 24px;

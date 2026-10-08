@@ -20,7 +20,7 @@ import { readFile } from 'node:fs/promises';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, extname, isAbsolute } from 'node:path';
@@ -269,12 +269,32 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
   return { ler, comentar, arquivo };
 }
 
+/* O `next dev` do repo, com as flags do editor. `COPY_EDIT=1` liga o stega no
+   servidor (request config do next-intl) e o rewrite do /__copy;
+   `NEXT_PUBLIC_COPY_EDIT=1` é a mesma flag vista do BROWSER, que é onde mora o
+   provider de um i18n client-only (o do board): sem o prefixo a variável não
+   entra no bundle e o browser desmarcaria na hidratação o que o servidor marcou.
+   Devolve a função que derruba o filho. */
+export function subirNextDev(root, { porta, portaDev, sair }) {
+  const next = spawn(
+    process.execPath,
+    [join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'dev', '-p', String(portaDev)],
+    {
+      cwd: root,
+      stdio: 'inherit',
+      env: { ...process.env, COPY_EDIT: '1', NEXT_PUBLIC_COPY_EDIT: '1', COPY_EDIT_PORTA: String(porta) },
+    }
+  );
+  if (sair) next.on('exit', sair);
+  return () => next.kill();
+}
+
 /* ── o servidor ──────────────────────────────────────────────────────────────
    Prefixo /__copy pra nunca colidir com rota do site. As rotas comuns moram
    aqui; o que muda de repo pra repo pergunta ao adapter:
 
      adapter.servir(req, res, url)  → true se atendeu (estático, barra do hero)
-     adapter.chaves(pagina)         → { status, corpo }
+     adapter.chaves(pagina, {locale}) → { status, corpo }
      adapter.salvar(dados)          → { status, corpo }
      adapter.tokens()               → [{ grupo, nome, valor }]
      adapter.token(dados)           → { erro } | { ok, ... }   (async)
@@ -315,7 +335,10 @@ export function criarServidor(root, adapter) {
     const pagina = new URL(url, 'http://x').searchParams.get('pagina') || '/';
 
     if (caminho === '/__copy/chaves') {
-      const r = adapter.chaves(pagina);
+      /* `locale` é o idioma que a página está mostrando (a ponte lê do stega).
+         Só o i18n-objeto usa; os outros adapters ignoram o 2º argumento. */
+      const locale = new URL(url, 'http://x').searchParams.get('locale') || undefined;
+      const r = adapter.chaves(pagina, { locale });
       return json(res, r.status, r.corpo);
     }
     if (caminho === '/__copy/comentarios') {

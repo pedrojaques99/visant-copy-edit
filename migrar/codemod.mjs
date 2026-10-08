@@ -184,7 +184,8 @@ export class Mensagens {
     let no = raiz;
     for (const s of segs.slice(0, -1)) {
       if (no[s] === undefined) return this.#criar(raiz, segs, texto);
-      if (typeof no[s] !== 'object' || no[s] === null) return null;
+      /* Array (lista de itens num i18n de objeto) não ganha chave com nome. */
+      if (typeof no[s] !== 'object' || no[s] === null || Array.isArray(no[s])) return null;
       no = no[s];
     }
     const v = no[segs.at(-1)];
@@ -203,7 +204,7 @@ export class Mensagens {
     let sec = secao;
     if (sec) {
       let i = 1;
-      while (typeof raiz[sec] === 'string') sec = secao + ++i;
+      while (typeof raiz[sec] === 'string' || Array.isArray(raiz[sec])) sec = secao + ++i;
       raiz[sec] ??= {};
       raiz = raiz[sec];
     }
@@ -250,7 +251,8 @@ export function analisarArquivo(sf, ctx) {
   let migrados = 0;
   const texto = sf.getFullText();
   const eol = texto.includes('\r\n') ? '\r\n' : '\n';
-  const pontoVirgula = /^import [^\n]*;\r?$/m.test(texto);
+  /* Sem import nenhum, quem diz o estilo é a diretiva (`"use client";`). */
+  const pontoVirgula = /^import [^\n]*;\r?$/m.test(texto) || (!/^import /m.test(texto) && /^['"]use client['"];/m.test(texto));
 
   /* Nome do `t`: `t` se o arquivo não usa esse identificador pra outra coisa
      (o `.map((t) => ...)` é comum), senão o próximo livre. */
@@ -259,8 +261,77 @@ export function analisarArquivo(sf, ctx) {
 
   const dentroConsumido = (n) => consumidos.some(([a, b]) => n.getStart() >= a && n.getEnd() <= b);
 
+  /* Por que a última chamada não saiu, quando o motivo não é o genérico "fora
+     de componente" (servidor num i18n client-only, variável num i18n de objeto).
+     Quem chamou põe na revisão com este motivo em vez do padrão. */
+  let ultimaFalha = null;
+  const A = ctx.acessor || null;
+
+  /* i18n do repo (acessor): reusa o `const { messages } = useI18n()` que o
+     componente já tem; se o hook já é chamado sem esse campo, acrescenta o
+     campo no destructuring; senão declara. O nome local foge do que o
+     componente já usa (`messages` de chat é comum): vira `copy`, `msgs`... */
+  function acessoDo(no) {
+    if (ctx.servidor) {
+      ultimaFalha = ctx.servidor;
+      return null;
+    }
+    const fn = componenteDe(no);
+    if (!fn) return null;
+    if (componentes.has(fn)) return componentes.get(fn).nomeT;
+    const corpo = fn.getBody();
+    const args = A.ns ? `'${A.ns}'` : '';
+    if (Node.isBlock(corpo)) {
+      for (const st of corpo.getStatements()) {
+        if (!Node.isVariableStatement(st)) continue;
+        for (const d of st.getDeclarations()) {
+          const ini = d.getInitializer() && desembrulhar(d.getInitializer());
+          if (!ini || !Node.isCallExpression(ini) || ini.getExpression().getText() !== A.hook) continue;
+          const a0 = ini.getArguments()[0];
+          if ((a0 ? (Node.isStringLiteral(a0) ? a0.getLiteralValue() : '?') : undefined) !== A.ns) continue;
+          const nome = d.getNameNode();
+          if (!Node.isObjectBindingPattern(nome)) continue;
+          const el = nome.getElements().find((e) => (e.getPropertyNameNode()?.getText() ?? e.getName()) === A.campo);
+          if (el) {
+            const info = { nomeT: el.getName(), reuso: true };
+            componentes.set(fn, info);
+            return info.nomeT;
+          }
+          const local = nomeLivre(fn);
+          if (!local) return null;
+          const els = nome.getElements();
+          const txt = local === A.campo ? A.campo : `${A.campo}: ${local}`;
+          if (els.length) edicoes.push({ ini: els.at(-1).getEnd(), fim: els.at(-1).getEnd(), texto: `, ${txt}` });
+          else edicoes.push({ ini: nome.getStart() + 1, fim: nome.getEnd() - 1, texto: ` ${txt} ` });
+          const info = { nomeT: local, reuso: true };
+          componentes.set(fn, info);
+          return local;
+        }
+      }
+    }
+    const local = nomeLivre(fn);
+    if (!local) return null;
+    const info = { nomeT: local, fn, reuso: false, decl: `const { ${local === A.campo ? A.campo : `${A.campo}: ${local}`} } = ${A.hook}(${args})` };
+    componentes.set(fn, info);
+    imports.add(A.hook);
+    return local;
+  }
+  /* Livre no componente E no módulo (um `messages` de nível de módulo seria
+     sombreado e o código de baixo passaria a ler a copy). */
+  function nomeLivre(fn) {
+    const dentro = new Set(fn.getDescendantsOfKind(SyntaxKind.Identifier).map((i) => i.getText()));
+    const doModulo = new Set(
+      sf.getStatements().flatMap((s) =>
+        Node.isVariableStatement(s) ? s.getDeclarations().map((d) => d.getName()) : Node.isFunctionDeclaration(s) || Node.isClassDeclaration(s) ? [s.getName()] : []
+      )
+    );
+    const opcoes = A.forma === 'funcao' ? [A.campo, 'tr', 'tc', 'tCopy'] : [A.campo, 'copy', 'msgs', 'textos'];
+    return opcoes.find((n) => !dentro.has(n) && !doModulo.has(n)) || null;
+  }
+
   /* Prepara o `t` do componente e devolve o nome dele. */
   function tDo(no) {
+    if (A) return acessoDo(no);
     const fn = componenteDe(no);
     if (!fn) return null;
     if (componentes.has(fn)) return componentes.get(fn).nomeT;
@@ -371,12 +442,52 @@ export function analisarArquivo(sf, ctx) {
 
   /* Registra a mensagem e devolve a chamada `t('chave', {...})`. */
   function chamada(no, mensagem, vars, rich = []) {
+    ultimaFalha = null;
+    if (A) return acesso(no, mensagem, vars, rich);
     const nomeT = tDo(no);
     if (!nomeT) return null;
     const chave = ctx.msgs.chave(ctx.ns, ctx.secao, slugDeIcu(mensagem), mensagem, candidatos(no, textoForaDoIcu(mensagem)));
     migrados++;
     const fn = rich.length ? `${nomeT}.rich` : nomeT;
     return `${fn}('${chave}'${objetoVars(vars, rich)})`;
+  }
+
+  /* A leitura no formato do i18n do repo (acessor). Objeto (`messages.a.b`)
+     não interpola: texto com variável, plural ou elemento no meio vai pra
+     revisão, nunca vira concatenação inventada. Função do i18next interpola
+     com `{{x}}`; plural (chaves _one/_other) e elemento (<Trans>) vão pra
+     revisão. As checagens vêm ANTES de declarar o acesso e registrar a chave:
+     texto recusado não deixa `const { messages }` sem uso nem chave órfã. */
+  function acesso(no, mensagem, vars, rich) {
+    if (rich.length) {
+      ultimaFalha = `Frase cortada por elemento: o i18n do repo (\`${A.hook}\`) não tem t.rich; quebre em pedaços ou monte à mão`;
+      return null;
+    }
+    if (/\{\w+, plural,/.test(mensagem)) {
+      ultimaFalha = `Plural: o i18n do repo (\`${A.hook}\`) não lê ICU; duas chaves ou o plural dele, à mão`;
+      return null;
+    }
+    if (vars.size && !(A.forma === 'funcao' && A.interpolacao === 'i18next')) {
+      ultimaFalha = `Texto com variável: o i18n do repo (\`${A.campo}${A.forma === 'objeto' ? '.a.b' : "('a.b')"}\`) não interpola; quebre em pedaços ou interpole à mão`;
+      return null;
+    }
+    const nome = tDo(no);
+    if (!nome) return null;
+    /* i18next: `{nome}` → `{{nome}}`; o apóstrofo dobrado do ICU desfaz. */
+    const texto = A.interpolacao === 'i18next' ? mensagem.replace(/''(?=\{)/g, "'").replace(/\{(\w+)\}/g, '{{$1}}') : mensagem;
+    const rel = ctx.msgs.chave(ctx.ns, ctx.secao, slugDeIcu(mensagem), texto, candidatos(no, textoForaDoIcu(mensagem)));
+    migrados++;
+    const caminho = [ctx.ns, ...rel.split('.')];
+    if (A.forma === 'funcao') return `${nome}('${caminho.join('.')}'${objetoVars(vars)})`;
+    return nome + caminho.map((s) => (/^[A-Za-z_$][\w$]*$/.test(s) ? `.${s}` : `[${JSON.stringify(s)}]`)).join('');
+  }
+
+  /* Revisão de um texto que não virou chamada: com o motivo específico quando
+     há um (servidor, variável), senão o padrão de quem chamou. */
+  function semChamada(no, padrao, trecho) {
+    const motivo = ultimaFalha || padrao;
+    ultimaFalha = null;
+    if (motivo) ctx.revisao(no, motivo, trecho);
   }
 
   /* ── 1. filhos de elemento: frases ─────────────────────────────────── */
@@ -561,7 +672,7 @@ export function analisarArquivo(sf, ctx) {
     if (!msg || ehMarca(msg)) return false;
     const call = chamada(el, msg, vars, rich);
     if (!call) {
-      ctx.revisao(el, 'Texto fora de componente (helper minúsculo, constante de módulo ou classe): o `t` não alcança; vire componente ou receba o texto por prop', msg);
+      semChamada(el, 'Texto fora de componente (helper minúsculo, constante de módulo ou classe): o `t` não alcança; vire componente ou receba o texto por prop', msg);
       return false;
     }
     let ini = itens[de].ini ?? itens[de].no.getStart();
@@ -608,7 +719,13 @@ export function analisarArquivo(sf, ctx) {
         continue;
       }
       const call = chamada(r, msg, vars);
-      if (!call) continue;
+      if (!call) {
+        if (ultimaFalha) {
+          semChamada(r, null, msg);
+          editar(r);
+        }
+        continue;
+      }
       edicoes.push({ ini: r.getStart(), fim: r.getEnd(), texto: call });
       editar(r);
       algum = true;
@@ -641,7 +758,7 @@ export function analisarArquivo(sf, ctx) {
       }
       const call = chamada(attr, valor.trim() === valor ? valor : valor, new Map());
       if (!call) {
-        ctx.revisao(attr, 'Atributo fora de componente: o `t` não alcança', valor);
+        semChamada(attr, 'Atributo fora de componente: o `t` não alcança', valor);
         editar(init);
         continue;
       }
@@ -661,7 +778,7 @@ export function analisarArquivo(sf, ctx) {
         if (!temLetra(f.literal) || ehDado(f.literal) || ehMarca(f.literal)) continue;
         const call = chamada(attr, montarIcu(f.partes), vars);
         if (!call) {
-          ctx.revisao(attr, 'Atributo fora de componente: o `t` não alcança', f.literal);
+          semChamada(attr, 'Atributo fora de componente: o `t` não alcança', f.literal);
           editar(e);
           continue;
         }
@@ -694,7 +811,13 @@ export function analisarArquivo(sf, ctx) {
       const msg = montarIcu(f.partes);
       if (msg !== msg.trim() || ehMarca(msg)) continue;
       const c = chamada(arg, msg, vars);
-      if (!c) continue;
+      if (!c) {
+        if (ultimaFalha) {
+          semChamada(arg, null, msg);
+          editar(arg);
+        }
+        continue;
+      }
       edicoes.push({ ini: arg.getStart(), fim: arg.getEnd(), texto: c });
       editar(arg);
     }
@@ -706,7 +829,7 @@ export function analisarArquivo(sf, ctx) {
   for (const info of componentes.values()) {
     if (info.reuso) continue;
     const corpo = info.fn.getBody();
-    const decl = `const ${info.nomeT} = ${info.async ? 'await getTranslations' : 'useTranslations'}('${ctx.ns}')${pontoVirgula ? ';' : ''}`;
+    const decl = (info.decl || `const ${info.nomeT} = ${info.async ? 'await getTranslations' : 'useTranslations'}('${ctx.ns}')`) + (pontoVirgula ? ';' : '');
     if (Node.isBlock(corpo)) {
       const primeiro = corpo.getStatements()[0];
       let ind = recuoDaLinha(info.fn.getStart()) + '  ';

@@ -25,6 +25,9 @@ A detecção, na ordem:
    next.config, ou `i18n/request.ts` / `src/i18n/request.ts`) e lê dele onde moram as mensagens:
    `import(`@/messages/${locale}.json`)` vira formato `locale` (site de cliente);
    `import { COPY } from '@/copy'` com um JSON por rota vira formato `rota` (Club).
+1b. **i18n próprio** (adapter `i18n-objeto`, ver "Repo que já tem i18n" abaixo): i18next /
+   react-i18next (deps + `locales/<idioma>/<ns>.json`), ou pasta `locales|i18n|lang` com um
+   arquivo por idioma E um provider que importa eles (o visant-board).
 2. **HTML estático** com `data-copy` + `copy*.json` na raiz (visantismo).
 3. Nada disso: não sobe, e aponta o `copy-edit migrar` (abaixo).
 
@@ -105,6 +108,29 @@ Três pontos moram no app, porque nenhum pacote alcança sem virar plugin de bui
    Se o app tem middleware do next-intl, tire `__copy` do `matcher`, senão ele manda
    `/__copy/chaves` pra `/pt-BR/__copy/chaves`.
 
+## Repo que já tem i18n (`i18n-objeto`)
+
+O editor trabalha EM CIMA do i18n do repo, sem converter pra next-intl, e os idiomas ficam
+(o board: `locales/pt-br.ts` + `locales/en.ts`, lidos pelo `useI18n()`).
+
+- **Arquivos**: objeto TS/JS (`export const messages = {}`, `export default {}`) ou JSON
+  (i18next, `<idioma>/<ns>.json`, e a 1ª parte da chave é o namespace). O save troca SÓ o literal
+  daquela chave (parser do TypeScript, `writers/objeto.mjs`): diff de uma linha, comentário e
+  aspas intactos. Chave inexistente ou que não é literal: recusa.
+- **Chave e idioma na tela**: `copy-edit ligar` escreve `lib/copy-edit-marcar.ts` no repo
+  (depende só do `@vercel/stega`, público; o pacote continua fora do package.json). No provider,
+  UMA mudança: os objetos passam por `marcarLocales({ en, 'pt-br': pt })`, que só age com
+  `NEXT_PUBLIC_COPY_EDIT=1` em dev e esconde `{ k: chave, l: idioma }` em cada texto. A ponte
+  põe `data-copy` + `data-copy-l`, espera o retrato ficar estável depois da hidratação (o
+  provider do board renderiza `en` e troca pra pt-BR num useEffect) e vigia trocas de idioma
+  depois; o save leva `locale` e grava no arquivo daquele idioma. O painel diz o idioma.
+- **migrar**: não cria next-intl nem JSON paralelo. Escreve as chaves novas no arquivo do idioma
+  padrão (pt) e usa o ACESSOR do repo (`const { messages } = useI18n()` + `messages.rota.chave`,
+  ou `t('rota.chave')` do i18next com `{{var}}`), detectado pelo uso no repo ou escrito na config
+  (`acessor: { hook, de, campo, forma }`). Os outros idiomas ganham a chave com o MESMO texto em
+  pt e cada uma vai pra revisão como "Traduzir pro en". Componente de servidor num i18n
+  client-only, texto com variável num i18n de objeto e plural vão pra revisão com o motivo.
+
 ## Token e estilo (`writers/css-token`)
 
 `tokens: { css, checar, origem, aoGravar }` nas opções do next-intl liga a paleta da barra:
@@ -132,6 +158,9 @@ client/barra.js|css      a barra (servida em /__copy/editor.js|css)
 client/ponte-stega.js    chave do stega → data-copy, espera a hidratação, sobe a barra
 adapters/html-json.mjs   copy*.json plano + build do repo (visantismo)
 adapters/next-intl.mjs   JSON aninhado, formato rota (Club) ou locale (site de cliente)
+adapters/i18n-objeto.mjs arquivo de idioma que exporta objeto (TS/JSON, i18next), um por idioma
+writers/objeto.mjs       lê/troca/insere chave em objeto TS ou JSON sem reescrever o arquivo
+server/marcar.mjs        marcarMensagens/marcarLocales + o trecho que o `ligar` escreve no repo
 writers/css-token.mjs    token na folha + estilo (na folha ou na fila)
 lint/copy-lint.mjs       o lint padrão (vendor da skill)
 migrar/                  `copy-edit migrar`: codemod (ts-morph), infra do next-intl, portões

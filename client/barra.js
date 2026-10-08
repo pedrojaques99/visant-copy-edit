@@ -8,6 +8,10 @@
  */
 (() => {
   const PAGINA = location.pathname;
+  /* O idioma que a página está mostrando, quando o repo tem um arquivo por
+     idioma (i18n-objeto). Quem sabe é a ponte, pelo stega; o save leva junto
+     pra o servidor gravar no arquivo certo. Vazio nos outros formatos. */
+  const idioma = () => (window.__copyEdit && window.__copyEdit.locale) || '';
   const editaveis = () => [...document.querySelectorAll('[data-copy]:not([data-copy-attr])')];
 
   /* `plaintext-only` é o que impede o editor de virar um gerador de markup:
@@ -29,6 +33,7 @@
   painel.className = 'ce-painel';
   painel.innerHTML =
     '<header><input type="search" placeholder="filtrar chave ou texto"><button class="ce-fechar">fechar</button></header>' +
+    '<div class="ce-idioma" hidden></div>' +
     '<div class="ce-lista"></div>';
 
   document.body.append(barra, recado, painel);
@@ -140,11 +145,14 @@
      servidor recusa a escrita se o disco não bater com ele, e é isso que impede
      uma aba velha de sobrescrever com texto antigo o que outra acabou de
      escrever. Sem esse par, o último Enter sempre ganha, mesmo estando errado. */
-  async function salvar(chave, valor, el, ehDesfazer, antesExplicito) {
+  async function salvar(chave, valor, el, ehDesfazer, antesExplicito, localeExplicito) {
     let antes = antesExplicito;
+    /* O idioma do ELEMENTO vence o da página; o desfazer leva o do save que ele
+       desfaz, mesmo que a página tenha trocado de idioma no meio. */
+    const locale = localeExplicito || (el && el.dataset.copyL) || idioma() || undefined;
     if (!ehDesfazer) {
       if (antes === undefined && el) antes = el.dataset.ceAntes ?? '';
-      if (antes !== undefined) pilha.push({ chave, valor: antes });
+      if (antes !== undefined) pilha.push({ chave, valor: antes, locale });
       botaoDesfazer().disabled = pilha.length === 0;
     } else {
       antes = undefined;
@@ -155,7 +163,7 @@
       r = await fetch('/__copy/salvar', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ pagina: PAGINA, chave, valor, antes }),
+        body: JSON.stringify({ pagina: PAGINA, chave, valor, antes, locale }),
       }).then((x) => x.json());
     } catch (e) {
       diz('o servidor do copy:edit caiu: ' + e.message, 'erro');
@@ -882,7 +890,7 @@
       el.dataset.ceAntes = ultimo.valor;
       el.classList.remove('ce-sujo');
     }
-    await salvar(ultimo.chave, ultimo.valor, el, true);
+    await salvar(ultimo.chave, ultimo.valor, el, true, undefined, ultimo.locale);
     diz(`desfeito · ${ultimo.chave} voltou ao valor anterior`);
   }
   botaoDesfazer().onclick = desfazer;
@@ -946,9 +954,14 @@
   let carregado = false;
 
   async function carregar() {
-    const r = await fetch('/__copy/chaves?pagina=' + encodeURIComponent(PAGINA)).then((x) =>
-      x.json()
-    );
+    const r = await fetch(
+      '/__copy/chaves?pagina=' + encodeURIComponent(PAGINA) + '&locale=' + encodeURIComponent(idioma())
+    ).then((x) => x.json());
+    /* Em repo com um arquivo por idioma, o painel diz de qual idioma são os
+       textos: editar aqui grava nesse arquivo. */
+    const id$ = painel.querySelector('.ce-idioma');
+    id$.hidden = !r.locale;
+    if (r.locale) id$.textContent = 'idioma da página: ' + r.locale + ' · grava em ' + r.arquivo;
     const naTela = new Set(alvos.map((el) => el.dataset.copy));
     lista.innerHTML = '';
     for (const [k, v] of Object.entries(r.chaves || {})) {
@@ -1004,6 +1017,12 @@
     });
   };
   painel.querySelector('.ce-fechar').onclick = () => (painel.dataset.aberto = '0');
+  /* A página trocou de idioma: a lista do painel é do idioma velho. */
+  window.addEventListener('copy-edit:locale', () => {
+    carregado = false;
+    if (painel.dataset.aberto === '1') carregar();
+    diz('idioma da página: ' + idioma() + ' (os saves vão pro arquivo dele)');
+  });
   /* Painel e régua dividem a mesma borda da tela, então um fecha o outro. Dois
      painéis empilhados à direita deixariam menos página visível do que os dois
      juntos entregam, e a página é o que se está julgando. */

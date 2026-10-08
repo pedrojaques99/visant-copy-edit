@@ -6,6 +6,7 @@
  *   copy-edit 4321                                          porta fixa
  *   copy-edit --detectar                                    só diz o que acharia
  *   copy-edit migrar [--dry]                               texto do JSX → JSON (migrar/)
+ *   copy-edit ligar [arquivo]                              escreve no repo o trecho do stega (i18n próprio)
  *   copy-edit --help
  *
  * Lê `copy-edit.config.mjs` da raiz do repo (process.cwd()). A config diz qual
@@ -26,7 +27,7 @@ import { pathToFileURL } from 'node:url';
 import { criarServidor, trancar } from '../server/nucleo.mjs';
 import { detectar, textoConfig } from '../server/detectar.mjs';
 
-const ADAPTERS = ['html-json', 'next-intl'];
+const ADAPTERS = ['html-json', 'next-intl', 'i18n-objeto'];
 const args = process.argv.slice(2);
 
 if (args.includes('--help') || args.includes('-h')) {
@@ -35,12 +36,14 @@ if (args.includes('--help') || args.includes('-h')) {
 uso: copy-edit [porta]
      copy-edit --detectar     mostra o que a detecção acharia, sem gravar nada
      copy-edit migrar [--dry] [--ignorar app/x,app/y] [--marca "Nome"]
-                              texto do JSX → next-intl + copy/<rota>.json (ver README)
+                              texto do JSX → next-intl + copy/<rota>.json (ver README);
+                              em repo com i18n próprio, no arquivo de idioma dele
+     copy-edit ligar [arquivo]  escreve o trecho que marca as mensagens (i18n próprio)
 
 Roda na raiz do repo. Com copy-edit.config.mjs, ela manda:
 
   export default {
-    adapter: 'html-json' | 'next-intl',
+    adapter: 'html-json' | 'next-intl' | 'i18n-objeto',
     opcoes: { ... }   // ver adapters/<nome>.mjs
   }
 
@@ -57,6 +60,13 @@ const arqConfig = join(root, 'copy-edit.config.mjs');
 if (args[0] === 'migrar') {
   const { executar } = await import('../migrar/cli.mjs');
   process.exit(await executar(root, args.slice(1)));
+}
+
+if (args[0] === 'ligar') {
+  const { ligar } = await import('../server/ligar.mjs');
+  const r = ligar(root, args[1]);
+  console.log('\n' + r.texto + '\n');
+  process.exit(r.ok ? 0 : 1);
 }
 
 if (args.includes('--detectar')) {

@@ -8,8 +8,12 @@
  *        import(`@/messages/${locale}.json`)  → formato 'locale' (site de cliente)
  *        import { COPY } from '@/copy'        → formato 'rota' (Club), quando a
  *                                               pasta tem um JSON por rota
- *   2. HTML estático com `data-copy` + copy*.json na raiz (visantismo).
- *   3. Nada disso → não sobe: oferece o `copy-edit migrar` (fase 3).
+ *   2. i18next / react-i18next (deps + locales/<idioma>/<ns>.json) → i18n-objeto
+ *   3. i18n próprio de objeto: pasta locales|i18n|lang com um arquivo por idioma
+ *      E um provider que importa eles (o board) → i18n-objeto, com o acessor
+ *      que os componentes usam (pro migrar)
+ *   4. HTML estático com `data-copy` + copy*.json na raiz (visantismo).
+ *   5. Nada disso → não sobe: oferece o `copy-edit migrar` (fase 3).
  *
  * POR QUE ESCREVER A CONFIG em vez de detectar toda vez: um editor que GRAVA
  * arquivo não pode mudar de ideia entre uma subida e outra porque alguém criou
@@ -263,6 +267,217 @@ function htmlJson(root, pkg) {
   return { adapter: 'html-json', opcoes, notas };
 }
 
+/* ── i18n próprio: i18next e objeto de mensagens ───────────────────────── */
+
+/* Onde repo costuma guardar arquivo de idioma. A ordem importa pouco: vale a
+   primeira pasta que tem cara de idioma (arquivo ou subpasta com nome de locale). */
+const PASTAS_IDIOMA = [
+  'locales', 'src/locales', 'public/locales', 'i18n', 'src/i18n', 'i18n/locales', 'src/i18n/locales',
+  'lang', 'src/lang', 'public/lang', 'translations', 'src/translations', 'messages', 'src/messages',
+  'assets/locales', 'src/assets/locales',
+];
+const NOME_IDIOMA = /^[a-z]{2,3}([-_][A-Za-z]{2,4})?$/;
+const EXT_IDIOMA = /\.(ts|js|mjs|json)$/;
+
+/* { pasta, locales: { idioma: rel(arquivo|pasta) }, modo: 'arquivo'|'pasta' } ou null */
+function pastaDeIdiomas(root) {
+  for (const p of PASTAS_IDIOMA) {
+    const dir = join(root, p);
+    if (!ehDir(dir)) continue;
+    const nomes = readdirSync(dir);
+    const subpastas = nomes.filter((n) => NOME_IDIOMA.test(n) && ehDir(join(dir, n)) && readdirSync(join(dir, n)).some((f) => f.endsWith('.json')));
+    if (subpastas.length) return { pasta: p, modo: 'pasta', locales: Object.fromEntries(subpastas.sort().map((l) => [l, `${p}/${l}`])) };
+    const arquivos = nomes.filter((n) => EXT_IDIOMA.test(n) && NOME_IDIOMA.test(n.replace(EXT_IDIOMA, '')) && !/\.d\.ts$/.test(n));
+    if (arquivos.length) return { pasta: p, modo: 'arquivo', locales: Object.fromEntries(arquivos.sort().map((f) => [f.replace(EXT_IDIOMA, ''), `${p}/${f}`])) };
+  }
+  return null;
+}
+
+/* O idioma do texto escrito no JSX: a casa é brasileira, então pt-* quando
+   existe; senão o que a config do i18n diz (fallbackLng, lng, defaultLocale);
+   senão o primeiro. É nele que o `migrar` grava e o save sem idioma cai. */
+function idiomaPadrao(locales, textos = []) {
+  const ls = Object.keys(locales);
+  const pt = ls.find((l) => /^pt([-_]br)?$/i.test(l)) || ls.find((l) => /^pt/i.test(l));
+  if (pt) return pt;
+  for (const t of textos) {
+    const m = t.match(/(?:fallbackLng|defaultLocale|lng)\s*:\s*['"]([^'"]+)['"]/);
+    if (m && ls.includes(m[1])) return m[1];
+  }
+  return ls[0];
+}
+
+/* Os fontes do repo (sem node_modules, build, public), pra achar quem importa
+   os arquivos de idioma e como os componentes leem a copy. Teto de arquivos
+   pra a detecção nunca virar uma varredura de minutos. */
+const FORA_DA_VARREDURA = new Set(['node_modules', '.next', '.git', 'dist', 'build', 'out', 'public', 'coverage', '.vercel', '.turbo', 'tmp', '.tmp']);
+function fontes(root, teto = 6000) {
+  const saida = [];
+  const andar = (dir) => {
+    if (saida.length >= teto) return;
+    let nomes;
+    try {
+      nomes = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const n of nomes) {
+      if (n.name.startsWith('.') && n.isDirectory()) continue;
+      if (n.isDirectory()) {
+        if (!FORA_DA_VARREDURA.has(n.name)) andar(join(dir, n.name));
+      } else if (/\.(tsx?|jsx?|mjs)$/.test(n.name) && !/\.d\.ts$/.test(n.name)) saida.push(join(dir, n.name));
+    }
+  };
+  andar(root);
+  return saida;
+}
+
+const semExt = (p) => p.replace(/\.(tsx?|jsx?|mjs|json)$/, '');
+const IMPORT = /import\s+([^'"]*?)\s+from\s+['"]([^'"]+)['"]/g;
+
+/* Quem importa os arquivos de idioma (o provider) e com qual nome de export. */
+function acharProvider(root, idiomas, arquivosFonte) {
+  const alvos = new Map(Object.entries(idiomas.locales).map(([l, r]) => [semExt(resolve(root, r)), l]));
+  const candidatos = [];
+  for (const f of arquivosFonte) {
+    const txt = lerTexto(f);
+    if (!/locale|lang|i18n|messages|translation/i.test(txt)) continue;
+    const imports = [];
+    for (const m of txt.matchAll(IMPORT)) {
+      const alvo = resolverEspec(root, f, m[2]);
+      if (alvo && alvos.has(semExt(alvo))) imports.push({ clausula: m[1], locale: alvos.get(semExt(alvo)) });
+    }
+    if (!imports.length) continue;
+    /* `import { messages as en }` → export 'messages'; `import en from` → default */
+    const nomeado = imports[0].clausula.match(/\{\s*([A-Za-z_$][\w$]*)/);
+    const locales = [...new Set(imports.map((i) => i.locale))];
+    /* Um componente que importa só o pt-br pra ler um texto não é o provider
+       (no board, o BriefingQuestionsEditor): o provider é quem junta os idiomas
+       e exporta contexto ou hook. */
+    const nota = locales.length * 10 + (/createContext|Provider|export\s+(function|const)\s+use[A-Z]/.test(txt) ? 5 : 0);
+    candidatos.push({ arquivo: f, texto: txt, exportar: nomeado ? nomeado[1] : 'default', locales, nota });
+  }
+  return candidatos.sort((x, y) => y.nota - x.nota)[0] || null;
+}
+
+/* Como os componentes leem a copy: o hook que o provider exporta, o campo que
+   sai dele e a forma de uso. `const { messages } = useI18n()` + `messages.a.b`
+   é forma 'objeto'; `const { t } = useI18n()` + `t('a.b')` é 'funcao'. Só
+   devolve quando a contagem não deixa dúvida; senão o dono escreve na config. */
+function acharAcessor(root, provider, arquivosFonte) {
+  const hooks = [...provider.texto.matchAll(/export\s+(?:function|const)\s+(use[A-Z]\w*)/g)].map((m) => m[1]);
+  if (!hooks.length) return null;
+  const votos = new Map(); // `${hook}|${campo}|${forma}` → n
+  const specs = new Map();
+  for (const f of arquivosFonte) {
+    if (f === provider.arquivo) continue;
+    const txt = lerTexto(f);
+    for (const hook of hooks) {
+      if (!txt.includes(hook + '(')) continue;
+      const imp = [...txt.matchAll(IMPORT)].find((m) => new RegExp(`\\b${hook}\\b`).test(m[1]));
+      if (imp) specs.set(imp[2], (specs.get(imp[2]) || 0) + 1);
+      for (const m of txt.matchAll(new RegExp(`const\\s*\\{([^}]*)\\}\\s*=\\s*${hook}\\(\\s*\\)`, 'g'))) {
+        for (const parte of m[1].split(',')) {
+          const [prop, local = prop] = parte.split(':').map((s) => s.trim());
+          if (!/^[A-Za-z_$][\w$]*$/.test(prop) || !/^[A-Za-z_$][\w$]*$/.test(local)) continue;
+          const objeto = (txt.match(new RegExp(`\\b${local}\\.[A-Za-z_$][\\w$]*\\.[A-Za-z_$]`, 'g')) || []).length;
+          const funcao = (txt.match(new RegExp(`\\b${local}\\(\\s*['"\`]`, 'g')) || []).length;
+          if (objeto) votos.set(`${hook}|${prop}|objeto`, (votos.get(`${hook}|${prop}|objeto`) || 0) + objeto);
+          if (funcao) votos.set(`${hook}|${prop}|funcao`, (votos.get(`${hook}|${prop}|funcao`) || 0) + funcao);
+        }
+      }
+    }
+  }
+  const ord = [...votos].sort((a, b) => b[1] - a[1]);
+  if (!ord.length || (ord[1] && ord[1][1] * 3 > ord[0][1])) return null; // empate não é detecção
+  const [hook, campo, forma] = ord[0][0].split('|');
+  const de = [...specs].sort((a, b) => b[1] - a[1])[0]?.[0];
+  return {
+    hook,
+    campo,
+    forma,
+    /* `@/x` vale de qualquer arquivo; relativo só vale de onde foi escrito, então
+       o migrar calcula o caminho a partir do arquivo do provider. */
+    de: de && !de.startsWith('.') ? de : undefined,
+    arquivo: rel(root, provider.arquivo),
+    usos: ord[0][1],
+  };
+}
+
+const portaDoDev = (pkg) => {
+  const m = String(pkg.scripts?.dev || '').match(/(?:-p|--port)\s+(\d+)/);
+  return m ? Number(m[1]) : undefined;
+};
+
+function comumAoObjeto(root, pkg, opcoes, notas) {
+  const porta = portaDoDev(pkg);
+  if (porta) opcoes.portaDev = porta;
+  const lint = primeiro(root, ['scripts/vendor/copy-lint.mjs', 'scripts/copy-lint.mjs']);
+  if (lint) opcoes.lint = rel(root, lint);
+  notas.push(`idioma padrão ${opcoes.localePadrao}: é nele que o \`migrar\` escreve e o save sem idioma cai (o texto da casa é pt-BR).`);
+}
+
+function i18next(root, pkg) {
+  const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+  const lib = ['next-i18next', 'react-i18next', 'i18next'].find((d) => deps[d]);
+  if (!lib) return null;
+  const idiomas = pastaDeIdiomas(root);
+  if (!idiomas) {
+    return { adapter: null, motivo: `o repo usa ${lib}, mas não achei os arquivos de idioma (locales/<idioma>/<ns>.json, public/locales/..., locales/<idioma>.json).` };
+  }
+  const configs = ['next-i18next.config.js', 'next-i18next.config.mjs', 'i18n.ts', 'i18n.js', 'src/i18n.ts', 'src/i18n.js', 'i18n/index.ts', 'src/i18n/index.ts', 'lib/i18n.ts', 'src/lib/i18n.ts']
+    .map((p) => lerTexto(join(root, p)))
+    .filter(Boolean);
+  const localePadrao = idiomaPadrao(idiomas.locales, configs);
+  const opcoes = { locales: idiomas.locales, localePadrao };
+  const notas = [`${lib} no package.json; idiomas em ${idiomas.pasta}: ${Object.keys(idiomas.locales).join(', ')}${idiomas.modo === 'pasta' ? ' (um JSON por namespace; a 1ª parte da chave é o namespace)' : ''}.`];
+  /* namespace onde o migrar escreve: common, senão translation (o padrão do i18next) */
+  let ns;
+  if (idiomas.modo === 'pasta') {
+    const nss = jsonsDe(join(root, idiomas.locales[localePadrao]));
+    ns = nss.includes('common') ? 'common' : nss.includes('translation') ? 'translation' : nss[0];
+  }
+  opcoes.acessor = { hook: 'useTranslation', de: lib === 'next-i18next' ? 'next-i18next' : 'react-i18next', campo: 't', forma: 'funcao', interpolacao: 'i18next', ...(ns ? { ns } : {}) };
+  notas.push(`acessor do migrar: \`const { t } = useTranslation(${ns ? `'${ns}'` : ''})\` + \`t('chave')\`.`);
+  const fonteTxt = fontes(root).map(lerTexto).join('\n');
+  if (!/marcarLocales|marcarMensagens/.test(fonteTxt)) {
+    notas.push('ATENÇÃO: os `resources` ainda não passam pelo `marcarLocales` (stega com o editor ligado). Rode `copy-edit ligar`. Se as traduções chegam por http-backend, não há onde marcar: a barra só edita pelo painel de chaves.');
+  }
+  comumAoObjeto(root, pkg, opcoes, notas);
+  return { adapter: 'i18n-objeto', opcoes, notas };
+}
+
+function objetoProprio(root, pkg) {
+  const idiomas = pastaDeIdiomas(root);
+  if (!idiomas || idiomas.modo !== 'arquivo') return null;
+  const arquivosFonte = fontes(root);
+  const provider = acharProvider(root, idiomas, arquivosFonte);
+  /* Pasta com cara de idioma e ninguém importando não é i18n: pode ser dado. */
+  if (!provider) return null;
+  const locales = Object.fromEntries(Object.entries(idiomas.locales).filter(([l]) => provider.locales.includes(l)));
+  const localePadrao = idiomaPadrao(locales, [provider.texto]);
+  const opcoes = { locales, localePadrao };
+  if (provider.exportar !== 'default') opcoes.exportar = provider.exportar;
+  const notas = [
+    `i18n próprio: ${Object.values(locales).join(', ')}, lidos por ${rel(root, provider.arquivo)} (export \`${provider.exportar}\`).`,
+  ];
+  const acessor = acharAcessor(root, provider, arquivosFonte);
+  if (acessor) {
+    const { usos, ...resto } = acessor;
+    opcoes.acessor = resto;
+    notas.push(
+      `acessor do migrar: \`const { ${acessor.campo} } = ${acessor.hook}()\` + ${acessor.forma === 'objeto' ? `\`${acessor.campo}.a.b\`` : `\`${acessor.campo}('a.b')\``} (${usos} usos no repo).`
+    );
+  } else {
+    notas.push('ATENÇÃO: não deu pra saber com segurança como os componentes leem a copy. Antes do `migrar`, escreva `acessor: { hook, de, campo, forma }` nesta config.');
+  }
+  if (!/marcarLocales|marcarMensagens/.test(provider.texto)) {
+    notas.push(`ATENÇÃO: ${rel(root, provider.arquivo)} ainda não passa as mensagens pelo \`marcarLocales\` (stega com o editor ligado). Sem isso a barra não acha o texto: rode \`copy-edit ligar\`.`);
+  }
+  comumAoObjeto(root, pkg, opcoes, notas);
+  return { adapter: 'i18n-objeto', opcoes, notas };
+}
+
 /* ── a ordem ───────────────────────────────────────────────────────────── */
 
 export const MIGRAR =
@@ -273,7 +488,7 @@ export const MIGRAR =
 
 export function detectar(root) {
   const pkg = lerJson(join(root, 'package.json')) || {};
-  const achado = nextIntl(root, pkg) || htmlJson(root, pkg);
+  const achado = nextIntl(root, pkg) || i18next(root, pkg) || objetoProprio(root, pkg) || htmlJson(root, pkg);
   if (achado) return achado;
   return { adapter: null, motivo: MIGRAR };
 }

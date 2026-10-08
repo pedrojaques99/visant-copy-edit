@@ -23,6 +23,8 @@ export async function executar(root, args) {
     const s = r.resumo;
     console.log(`  copy-edit migrar${dry ? ' --dry (nada gravado)' : ''}: ${s.modo}, ${seg}s`);
     console.log(`    ${s.migrados} textos migrados em ${s.arquivos} arquivos (${s.chavesNovas} chaves novas, ${s.reusos} reaproveitadas)`);
+    if (s.arquivoPadrao)
+      console.log(`    ${s.chavesNoLocale} chaves entram em ${s.arquivoPadrao}; ${s.outros.join(', ') || 'nenhum outro idioma'} com o mesmo texto: ${s.traduzir} pra traduzir`);
     console.log(`    ${s.revisao} itens pra revisão, ${s.barrados} arquivo(s) barrados pela checagem de tipo`);
     const ns = Object.entries(s.porNs).sort((a, b) => b[1] - a[1]);
     if (ns.length) console.log(`    por namespace: ${ns.map(([k, v]) => `${k} ${v}`).join(', ')}`);
