@@ -31,7 +31,13 @@
     "atalhos": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,144H32V64H224V192Zm-16-64a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,128Zm0-32a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,96ZM72,160a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16h8A8,8,0,0,1,72,160Zm96,0a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,160Zm40,0a8,8,0,0,1-8,8h-8a8,8,0,0,1,0-16h8A8,8,0,0,1,208,160Z\"/></svg>",
     "menu": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z\"/></svg>",
     "fechar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/></svg>",
-    "alca": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M104,60A12,12,0,1,1,92,48,12,12,0,0,1,104,60Zm60,12a12,12,0,1,0-12-12A12,12,0,0,0,164,72ZM92,116a12,12,0,1,0,12,12A12,12,0,0,0,92,116Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,116ZM92,184a12,12,0,1,0,12,12A12,12,0,0,0,92,184Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,184Z\"/></svg>"
+    "alca": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M104,60A12,12,0,1,1,92,48,12,12,0,0,1,104,60Zm60,12a12,12,0,1,0-12-12A12,12,0,0,0,164,72ZM92,116a12,12,0,1,0,12,12A12,12,0,0,0,92,116Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,116ZM92,184a12,12,0,1,0,12,12A12,12,0,0,0,92,184Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,184Z\"/></svg>",
+    "fila": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M232.07,186.76a80,80,0,0,0-62.5-114.17A80,80,0,1,0,23.93,138.76l-7.27,24.71a16,16,0,0,0,19.87,19.87l24.71-7.27a80.39,80.39,0,0,0,25.18,7.35,80,80,0,0,0,108.34,40.65l24.71,7.27a16,16,0,0,0,19.87-19.86ZM62,159.5a8.28,8.28,0,0,0-2.26.32L32,168l8.17-27.76a8,8,0,0,0-.63-6,64,64,0,1,1,26.26,26.26A8,8,0,0,0,62,159.5Zm153.79,28.73L224,216l-27.76-8.17a8,8,0,0,0-6,.63,64.05,64.05,0,0,1-85.87-24.88A79.93,79.93,0,0,0,174.7,89.71a64,64,0,0,1,41.75,92.48A8,8,0,0,0,215.82,188.23Z\"/></svg>",
+    "busca": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/></svg>",
+    "check": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z\"/></svg>",
+    "reabrir": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z\"/></svg>",
+    "enviar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M231.87,114l-168-95.89A16,16,0,0,0,40.92,37.34L71.55,128,40.92,218.67A16,16,0,0,0,56,240a16.15,16.15,0,0,0,7.93-2.1l167.92-96.05a16,16,0,0,0,.05-27.89ZM56,224a.56.56,0,0,0,0-.12L85.74,136H144a8,8,0,0,0,0-16H85.74L56.06,32.16A.46.46,0,0,0,56,32l168,95.83Z\"/></svg>",
+    "apagar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/></svg>"
   };
   /* ICONES:FIM */
 
@@ -79,7 +85,9 @@
     recado.dataset.tipo = tipo || '';
     barra.dataset.alerta = texto && tipo === 'erro' ? '1' : '';
     clearTimeout(diz.t);
-    if (texto && tipo !== 'erro') diz.t = setTimeout(() => (recado.textContent = ''), 4000);
+    /* Aviso do agente fica mais tempo: chega sozinho, e o designer pode estar olhando a página. */
+    if (texto && tipo !== 'erro')
+      diz.t = setTimeout(() => (recado.textContent = ''), tipo === 'agente' ? 9000 : 4000);
   }
 
   /* ── a régua de celular ──────────────────────────────────────────────────
@@ -314,7 +322,8 @@
      foto, motion, token) não tem SSoT pra este editor escrever, então vira
      pedido: uma linha em docs/COMENTARIOS-IA.md com rota e seletor, que o
      Claude executa depois com o `npm run check` como juiz. */
-  const UI = '.ce-barra, .ce-painel, .ce-regua-painel, .ce-recado, .ce-campo, .ce-nota';
+  const UI =
+    '.ce-barra, .ce-painel, .ce-regua-painel, .ce-recado, .ce-campo, .ce-nota, .ce-fila, .ce-pinos, .ce-paleta, .ce-ajuda';
 
   /* Seletor curto e estável: para no primeiro id ou data-copy, e usa
      nth-of-type só quando há irmão do mesmo tipo. */
@@ -356,6 +365,7 @@
   const fecharNota = () => {
     nota.dataset.aberto = '0';
     alvoNota = null;
+    pinoNovo.dataset.aberto = '0';
   };
   nota.querySelector('.ce-nota-fechar').onclick = fecharNota;
 
@@ -599,13 +609,43 @@
     );
   }
 
+  /* Ponto do clique em % do elemento: é ali que o pin fica, mesmo com a página rolando ou
+     o layout mudando de largura. */
+  let posNota = null;
+  const pinoNovo = document.createElement('span');
+  pinoNovo.className = 'ce-pino ce-pino-novo';
+  pinoNovo.setAttribute('aria-hidden', 'true');
+  document.body.append(pinoNovo);
+
   function abrirNota(el, x, y) {
     alvoNota = el;
-    nota.style.left = Math.max(8, Math.min(x, innerWidth - 360)) + 'px';
-    nota.style.top = Math.max(8, Math.min(y + 12, innerHeight - 120)) + 'px';
+    const r = el.getBoundingClientRect();
+    posNota =
+      r.width && r.height
+        ? {
+            x: Math.round(((x - r.left) / r.width) * 100),
+            y: Math.round(((y - r.top) / r.height) * 100),
+          }
+        : null;
+    /* O pin provisório mostra o número que o comentário vai ganhar. */
+    const proximo = (window.__ceProximoId && window.__ceProximoId()) || '';
+    pinoNovo.textContent = proximo;
+    pinoNovo.style.left = x - 4 + 'px';
+    pinoNovo.style.top = y - 22 + 'px';
+    pinoNovo.dataset.aberto = '1';
+    /* O balão nasce ao lado do pin; perto da borda, vira pro outro lado. */
+    const w = 340;
+    const esq = x + 26 + w > innerWidth ? x - w - 14 : x + 26;
+    nota.style.left = Math.max(8, esq) + 'px';
+    nota.style.top = Math.max(8, Math.min(y - 22, innerHeight - 160)) + 'px';
     nota.dataset.aberto = '1';
     notaTxt.value = '';
-    montarCores(el);
+    notaTxt.placeholder = 'Pedir pro agente… (Enter envia, Shift+Enter quebra linha)';
+    notaTxt.focus();
+    /* As cores carregam depois (async) e mexem no DOM do balão: o foco volta pro campo. */
+    Promise.resolve(montarCores(el)).finally(() => {
+      if (nota.dataset.aberto === '1' && document.activeElement !== notaTxt) notaTxt.focus();
+    });
   }
 
   /* ── alça de largura ─────────────────────────────────────────────────────
@@ -741,7 +781,9 @@
   async function enviarNota() {
     const el = alvoNota;
     const texto = notaTxt.value.trim();
+    const pos = posNota;
     nota.dataset.aberto = '0';
+    pinoNovo.dataset.aberto = '0';
     alvoNota = null;
     notaTxt.blur();
     if (!el || !texto) return;
@@ -753,13 +795,15 @@
         seletor: seletorDe(el),
         trecho: (el.innerText || el.getAttribute('alt') || '').trim(),
         texto,
+        pos,
       }),
     })
       .then((x) => x.json())
       .catch((e) => ({ erro: e.message }));
     if (r.erro) return diz('comentário não salvou: ' + r.erro, 'erro');
     el.classList.add('ce-comentado');
-    diz('comentário na fila · ' + r.arquivo);
+    diz(`#${r.id} enviado · o pin fica laranja quando o agente ler`);
+    recarregarFila();
   }
 
   notaTxt.addEventListener('keydown', (e) => {
@@ -768,8 +812,7 @@
       enviarNota();
     }
     if (e.key === 'Escape') {
-      nota.dataset.aberto = '0';
-      alvoNota = null;
+      fecharNota();
       /* Sem o blur o foco ficava no campo escondido e as teclas (E, C, K) viravam texto. */
       notaTxt.blur();
     }
@@ -803,24 +846,7 @@
     true
   );
 
-  /* O que já está na fila aparece marcado, pra ninguém pedir duas vezes. */
-  fetch('/__copy/comentarios?pagina=' + encodeURIComponent(PAGINA))
-    .then((x) => x.json())
-    .then((r) => {
-      for (const c of r.itens || []) {
-        if (c.feito) continue;
-        try {
-          const el = document.querySelector(c.seletor);
-          if (el) {
-            el.classList.add('ce-comentado');
-            el.title = 'pedido pra IA: ' + c.texto;
-          }
-        } catch {
-          /* seletor que não parseia mais: a linha continua no md */
-        }
-      }
-    })
-    .catch(() => {});
+  /* O que já está na fila aparece como pin numerado: ver barra v3 (recarregarFila). */
 
   /* Captura, e não bolha: o handler do site (submit, toggle do details) não
      pode nem saber que o clique aconteceu.
@@ -1293,4 +1319,573 @@
     guardar();
     aplicar();
   });
+
+  /* ══ barra v3: o ciclo designer ↔ agente (PLAN-BARRA-V3.md) ═══════════════════════════
+     Cada comentário vira um pin numerado no elemento e um card no painel de comentários
+     (F). O agente lê a mesma fila (GET /__copy/comentarios?todas=1), responde na thread e
+     marca feito; a barra busca de novo a cada 5s e mostra a resposta sem recarregar. */
+
+  const fila = { itens: [], filtro: 'abertos', foco: null };
+  const pinos = document.createElement('div');
+  pinos.className = 'ce-pinos';
+  document.body.append(pinos);
+
+  const filaPainel = document.createElement('aside');
+  filaPainel.className = 'ce-fila';
+  filaPainel.setAttribute('aria-label', 'comentários');
+  filaPainel.innerHTML =
+    '<header><b>Comentários</b>' +
+    '<div class="ce-abas" role="tablist">' +
+    '<button type="button" data-filtro="abertos" aria-selected="true">Abertos</button>' +
+    '<button type="button" data-filtro="feitos" aria-selected="false">Feitos</button>' +
+    '<button type="button" data-filtro="todos" aria-selected="false">Todos</button>' +
+    '</div>' +
+    '<button type="button" class="ce-fila-fechar" aria-label="fechar">' +
+    (ICONES.fechar || '×') +
+    '</button></header>' +
+    '<div class="ce-fila-lista"></div>' +
+    '<footer>Tecla <kbd>C</kbd> num elemento pra comentar. O agente responde aqui.</footer>';
+  document.body.append(filaPainel);
+  const filaLista = filaPainel.querySelector('.ce-fila-lista');
+
+  const filaAberta = () => filaPainel.dataset.aberto === '1';
+  function abrirFila(abre, foco) {
+    filaPainel.dataset.aberto = abre ? '1' : '0';
+    filaBt.setAttribute('aria-pressed', String(abre));
+    if (foco !== undefined) fila.foco = foco;
+    if (abre) desenharFila();
+    /* Fechou com o foco num campo do painel: sem o blur, as próximas teclas (C, F, E)
+       viravam texto da resposta escondida. */
+    else if (filaPainel.contains(document.activeElement)) document.activeElement.blur();
+  }
+
+  /* Elemento de um comentário. Seletor que não parseia mais devolve null: o card
+     continua no painel (sem pin), e o .md segue sendo a verdade. */
+  function elDe(c) {
+    try {
+      return document.querySelector(c.seletor);
+    } catch {
+      return null;
+    }
+  }
+
+  async function recarregarFila() {
+    const r = await fetch('/__copy/comentarios?pagina=' + encodeURIComponent(PAGINA))
+      .then((x) => x.json())
+      .catch(() => null);
+    if (!r) return;
+    const antes = JSON.stringify(fila.itens);
+    /* Servidor de versão anterior (editor já no ar quando a barra mudou no disco)
+       manda o item sem id e sem thread: completa aqui em vez de quebrar a página. */
+    const velhos = new Map(fila.itens.map((c) => [c.id, c]));
+    fila.itens = (r.itens || []).map((c, i) => ({
+      ...c,
+      estado: c.estado || (c.feito ? 'feito' : 'aberto'),
+      id: c.id ?? i + 1,
+      trecho: c.trecho || '',
+      respostas: Array.isArray(c.respostas) ? c.respostas : [],
+      semThread: c.id == null,
+    }));
+    if (JSON.stringify(fila.itens) === antes) return;
+    /* O designer fica sabendo, sem abrir nada, quando o agente pega, responde ou termina. */
+    if (velhos.size) {
+      const feitos = [];
+      const respondidos = [];
+      const lidos = [];
+      for (const c of fila.itens) {
+        const v = velhos.get(c.id);
+        if (!v) continue;
+        const iaAntes = v.respostas.filter((x) => x.autor === 'ia').length;
+        const iaAgora = c.respostas.filter((x) => x.autor === 'ia').length;
+        if (v.estado !== 'feito' && c.estado === 'feito') feitos.push('#' + c.id);
+        else if (iaAgora > iaAntes) respondidos.push('#' + c.id);
+        else if (v.estado === 'aberto' && c.estado === 'lido') lidos.push('#' + c.id);
+      }
+      /* Uma frase só por rodada, a mais importante primeiro. */
+      const lista = (xs) => xs.join(', ');
+      const partes = [];
+      if (feitos.length) partes.push(`${lista(feitos)} feito pelo agente`);
+      if (respondidos.length) partes.push(`o agente respondeu ${lista(respondidos)}`);
+      if (lidos.length) partes.push(`o agente leu ${lista(lidos)}`);
+      if (partes.length) diz(partes.join(' · '), 'agente');
+    }
+    const abertos = fila.itens.filter((c) => !c.feito).length;
+    filaBt.dataset.extra = abertos ? abertos + ' aberto' + (abertos > 1 ? 's' : '') : 'nenhum aberto';
+    filaBt.dataset.n = abertos || '';
+    desenharPinos();
+    if (filaAberta()) desenharFila();
+  }
+
+  const ROTULO_ESTADO = { aberto: 'aguardando o agente', lido: 'o agente leu', feito: 'feito' };
+  window.__ceProximoId = () => fila.itens.reduce((n, c) => Math.max(n, c.id), 0) + 1;
+
+  /* Passar o mouse no pin mostra o pedido e a última resposta, sem abrir o painel. */
+  const previa = document.createElement('div');
+  previa.className = 'ce-previa';
+  previa.setAttribute('role', 'tooltip');
+  document.body.append(previa);
+  function mostrarPrevia(p, c) {
+    previa.innerHTML = '';
+    const est = document.createElement('span');
+    est.className = 'ce-estado';
+    est.dataset.estado = c.estado;
+    est.textContent = ROTULO_ESTADO[c.estado];
+    const t = document.createElement('p');
+    t.textContent = c.texto;
+    previa.append(est, t);
+    const ultima = c.respostas[c.respostas.length - 1];
+    if (ultima) {
+      const u = document.createElement('p');
+      u.className = 'ce-previa-resp';
+      u.textContent = (ultima.autor === 'ia' ? 'Agente: ' : 'Você: ') + ultima.texto;
+      previa.append(u);
+    }
+    const r = p.getBoundingClientRect();
+    previa.dataset.aberto = '1';
+    const w = previa.offsetWidth;
+    previa.style.left = Math.min(innerWidth - w - 8, r.right + 8) + 'px';
+    previa.style.top = Math.max(8, r.top - 4) + 'px';
+  }
+
+  /* ── pins ─────────────────────────────────────────────────────────────── */
+  function desenharPinos() {
+    pinos.innerHTML = '';
+    document.querySelectorAll('.ce-comentado').forEach((el) => el.classList.remove('ce-comentado'));
+    for (const c of fila.itens) {
+      if (c.feito && fila.filtro === 'abertos') continue;
+      const el = elDe(c);
+      if (!el) continue;
+      const p = document.createElement('button');
+      p.type = 'button';
+      p.className = 'ce-pino';
+      p.dataset.id = c.id;
+      p.dataset.feito = c.feito ? '1' : '';
+      p.dataset.estado = c.estado;
+      const ultima = c.respostas[c.respostas.length - 1];
+      p.dataset.ia = ultima && ultima.autor === 'ia' && !c.feito ? '1' : '';
+      p.textContent = c.id;
+      p.setAttribute('aria-label', `comentário ${c.id} (${ROTULO_ESTADO[c.estado]}): ${c.texto}`);
+      p.onclick = () => abrirFila(true, c.id);
+      p.onmouseenter = () => {
+        el.classList.add('ce-mira');
+        mostrarPrevia(p, c);
+      };
+      p.onmouseleave = () => {
+        el.classList.remove('ce-mira');
+        previa.dataset.aberto = '0';
+      };
+      pinos.append(p);
+      if (!c.feito) el.classList.add('ce-comentado');
+    }
+    posicionarPinos();
+  }
+  function posicionarPinos() {
+    for (const p of pinos.children) {
+      const c = fila.itens.find((x) => x.id === Number(p.dataset.id));
+      const el = c && elDe(c);
+      const r = el && el.getBoundingClientRect();
+      if (!r || (!r.width && !r.height)) {
+        p.hidden = true;
+        continue;
+      }
+      p.hidden = false;
+      /* Com ponto salvo, o pin fica onde o designer clicou (a ponta do balão no ponto);
+         comentário antigo, sem ponto, fica no canto de cima do elemento. */
+      const x = c.pos ? r.left + (r.width * c.pos.x) / 100 : r.right - 6;
+      const y = c.pos ? r.top + (r.height * c.pos.y) / 100 : r.top;
+      p.style.left = Math.min(innerWidth - 26, Math.max(4, x - 4)) + 'px';
+      p.style.top = Math.max(4, y - 22) + 'px';
+    }
+  }
+  let rafPinos = 0;
+  const agendarPinos = () => {
+    cancelAnimationFrame(rafPinos);
+    rafPinos = requestAnimationFrame(posicionarPinos);
+  };
+  addEventListener('scroll', agendarPinos, { passive: true, capture: true });
+  addEventListener('resize', agendarPinos);
+
+  /* ── painel de comentários ───────────────────────────────────────────── */
+  async function postarFila(rota, corpo) {
+    const r = await fetch(rota, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(corpo),
+    })
+      .then((x) => x.json())
+      .catch((e) => ({ erro: e.message }));
+    if (r.erro) diz(r.erro, 'erro');
+    else await recarregarFila();
+    return r;
+  }
+
+  function desenharFila() {
+    const lista = fila.itens.filter((c) =>
+      fila.filtro === 'abertos' ? !c.feito : fila.filtro === 'feitos' ? c.feito : true
+    );
+    filaLista.innerHTML = '';
+    if (!lista.length) {
+      const v = document.createElement('p');
+      v.className = 'ce-vazio';
+      v.textContent =
+        fila.filtro === 'abertos' ? 'Nada aberto nesta página.' : 'Nenhum comentário aqui.';
+      filaLista.append(v);
+      return;
+    }
+    for (const c of lista) filaLista.append(card(c));
+    /* O foco vale pra um desenho só: se o card não está nesta aba, o pedido morre aqui
+       (senão uma troca de aba depois roubava o foco pra uma resposta escondida). */
+    const id = fila.foco;
+    fila.foco = null;
+    const foco = id && filaLista.querySelector(`[data-id="${id}"]`);
+    if (foco) {
+      foco.scrollIntoView({ block: 'nearest' });
+      foco.classList.add('ce-card-foco');
+      setTimeout(() => filaAberta() && foco.querySelector('textarea')?.focus(), 0);
+    }
+  }
+
+  function card(c) {
+    const art = document.createElement('article');
+    art.className = 'ce-card';
+    art.dataset.id = c.id;
+    art.dataset.feito = c.feito ? '1' : '';
+    const topo = document.createElement('div');
+    topo.className = 'ce-card-topo';
+    const n = document.createElement('span');
+    n.className = 'ce-card-n';
+    n.textContent = c.id;
+    const onde = document.createElement('span');
+    onde.className = 'ce-card-onde';
+    onde.textContent = c.trecho ? `“${c.trecho}”` : c.seletor;
+    onde.title = c.seletor;
+    const st = document.createElement('button');
+    st.type = 'button';
+    st.className = 'ce-card-status';
+    st.innerHTML = (c.feito ? ICONES.reabrir : ICONES.check) || '';
+    st.append(c.feito ? ' Reabrir' : ' Feito');
+    st.onclick = () => postarFila('/__copy/comentario/status', { id: c.id, feito: !c.feito });
+    const chip = document.createElement('span');
+    chip.className = 'ce-estado';
+    chip.dataset.estado = c.estado;
+    chip.textContent = ROTULO_ESTADO[c.estado];
+    topo.append(n, onde, chip, st);
+
+    const msgs = document.createElement('div');
+    msgs.className = 'ce-thread';
+    const msg = (autor, texto) => {
+      const m = document.createElement('p');
+      m.className = 'ce-msg';
+      m.dataset.autor = autor;
+      const quem = document.createElement('b');
+      quem.textContent = autor === 'ia' ? 'Agente' : 'Você';
+      m.append(quem, document.createTextNode(texto));
+      return m;
+    };
+    /* O pedido do designer é editável (lápis) e apagável (lixeira). Editar devolve pra
+       "aguardando o agente": ele precisa ler de novo. */
+    const pedido = msg('designer', c.texto);
+    pedido.classList.add('ce-pedido');
+    const acoes = document.createElement('span');
+    acoes.className = 'ce-msg-acoes';
+    const btEditar = document.createElement('button');
+    btEditar.type = 'button';
+    btEditar.setAttribute('aria-label', 'editar comentário');
+    btEditar.innerHTML = ICONES.editar || '✎';
+    const btApagar = document.createElement('button');
+    btApagar.type = 'button';
+    btApagar.setAttribute('aria-label', 'apagar comentário');
+    btApagar.innerHTML = ICONES.apagar || '×';
+    acoes.append(btEditar, btApagar);
+    pedido.querySelector('b').append(acoes);
+    btEditar.onclick = () => {
+      const ed = document.createElement('textarea');
+      ed.className = 'ce-editar';
+      ed.value = c.texto;
+      ed.rows = 2;
+      pedido.replaceChildren(pedido.querySelector('b'), ed);
+      ed.focus();
+      ed.setSelectionRange(ed.value.length, ed.value.length);
+      ed.addEventListener('keydown', async (e) => {
+        e.stopPropagation();
+        if (e.key === 'Escape') return desenharFila();
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const texto = ed.value.trim();
+          if (texto && texto !== c.texto) {
+            fila.foco = c.id;
+            await postarFila('/__copy/comentario/editar', { id: c.id, texto });
+          } else desenharFila();
+        }
+      });
+    };
+    btApagar.onclick = async () => {
+      if (btApagar.dataset.confirma !== '1') {
+        btApagar.dataset.confirma = '1';
+        btApagar.setAttribute('aria-label', 'clique de novo pra apagar');
+        diz(`clique de novo na lixeira pra apagar o #${c.id}`);
+        setTimeout(() => delete btApagar.dataset.confirma, 3000);
+        return;
+      }
+      await postarFila('/__copy/comentario/apagar', { id: c.id });
+      diz(`#${c.id} apagado`);
+    };
+    msgs.append(pedido);
+    for (const r of c.respostas) msgs.append(msg(r.autor, r.texto));
+
+    const form = document.createElement('form');
+    form.className = 'ce-responder';
+    const ta = document.createElement('textarea');
+    ta.rows = 1;
+    ta.placeholder = c.feito ? 'Reabrir com um pedido…' : 'Responder…';
+    const enviar = document.createElement('button');
+    enviar.type = 'submit';
+    enviar.setAttribute('aria-label', 'enviar resposta');
+    enviar.innerHTML = ICONES.enviar || '→';
+    form.append(ta, enviar);
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const texto = ta.value.trim();
+      if (!texto) return;
+      ta.value = '';
+      fila.foco = c.id;
+      /* Responder num feito é dizer "ainda não": reabre junto. */
+      if (c.feito) await postarFila('/__copy/comentario/status', { id: c.id, feito: false, texto });
+      else await postarFila('/__copy/comentario/responder', { id: c.id, texto });
+    };
+    ta.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+      /* Esc com rascunho só sai do campo; com o campo vazio fecha o painel. */
+      if (e.key === 'Escape') {
+        if (ta.value.trim()) ta.blur();
+        else abrirFila(false);
+      }
+    });
+
+    /* Passar o mouse no card acende o elemento; clicar leva até ele. */
+    art.addEventListener('mouseenter', () => elDe(c)?.classList.add('ce-mira'));
+    art.addEventListener('mouseleave', () => elDe(c)?.classList.remove('ce-mira'));
+    topo.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      const el = elDe(c);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      else diz(`#${c.id}: o elemento não está mais na página (seletor ${c.seletor})`);
+    });
+
+    art.append(topo, msgs, form);
+    return art;
+  }
+
+  filaPainel.querySelector('.ce-abas').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-filtro]');
+    if (!b) return;
+    fila.filtro = b.dataset.filtro;
+    for (const x of filaPainel.querySelectorAll('[data-filtro]'))
+      x.setAttribute('aria-selected', String(x === b));
+    desenharPinos();
+    desenharFila();
+  });
+  filaPainel.querySelector('.ce-fila-fechar').onclick = () => abrirFila(false);
+
+  /* Botão da fila na pílula, logo depois do comentar. */
+  const grupo = barra.querySelector('.ce-grupo');
+  grupo.querySelector('.ce-comentar').insertAdjacentHTML(
+    'afterend',
+    botao('ce-fila-bt', 'fila', 'Comentários', 'F', 'aria-pressed="false"')
+  );
+  const filaBt = grupo.querySelector('.ce-fila-bt');
+  filaBt.onclick = () => abrirFila(!filaAberta());
+
+  recarregarFila();
+  setInterval(() => {
+    if (document.visibilityState === 'visible') recarregarFila();
+  }, 5000);
+
+  /* ── command palette (⌘K) ───────────────────────────────────────────────
+     Uma caixa, três tipos de resultado: ações da barra, textos editáveis da página (pela
+     chave ou pelo texto) e comentários. Setas navegam, Enter executa, Esc fecha. */
+  const paleta = document.createElement('div');
+  paleta.className = 'ce-paleta';
+  paleta.setAttribute('role', 'dialog');
+  paleta.setAttribute('aria-label', 'buscar no editor');
+  paleta.innerHTML =
+    '<div class="ce-paleta-caixa">' +
+    '<label>' +
+    (ICONES.busca || '') +
+    '<input type="text" placeholder="Buscar texto, chave, comentário ou ação…" aria-label="buscar"></label>' +
+    '<ul role="listbox"></ul>' +
+    '<footer><kbd>↑↓</kbd> navegar <kbd>Enter</kbd> abrir <kbd>Esc</kbd> fechar</footer>' +
+    '</div>';
+  document.body.append(paleta);
+  const pInput = paleta.querySelector('input');
+  const pLista = paleta.querySelector('ul');
+  let pItens = [];
+  let pSel = 0;
+
+  const ACOES = [
+    ['Pausar ou retomar a edição', 'E', '.ce-toggle'],
+    ['Comentar um elemento', 'C', '.ce-comentar'],
+    ['Abrir comentários', 'F', '.ce-fila-bt'],
+    ['Textos sem cara (alt, title, og)', 'K', '.ce-chaves'],
+    ['Ver no celular', 'M', '.ce-regua'],
+    ['Desfazer o último save', '⌘Z', '.ce-desfazer'],
+    ['Atalhos', '?', '.ce-atalhos'],
+  ];
+
+  const norm = (t) =>
+    String(t || '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase();
+
+  function fonteDaPaleta() {
+    const out = ACOES.map(([rot, tecla, sel]) => ({
+      tipo: 'ação',
+      rotulo: rot,
+      tecla,
+      busca: rot,
+      fazer: () => barra.querySelector(sel)?.click(),
+    }));
+    for (const c of fila.itens) {
+      out.push({
+        tipo: c.feito ? 'feito' : c.estado === 'lido' ? 'agente leu' : 'comentário',
+        rotulo: `#${c.id} ${c.texto}`,
+        busca: `#${c.id} ${c.texto} ${c.trecho}`,
+        fazer: () => abrirFila(true, c.id),
+      });
+    }
+    for (const el of editaveis()) {
+      const texto = (el.innerText || '').trim().replace(/\s+/g, ' ');
+      if (!texto) continue;
+      out.push({
+        tipo: 'texto',
+        rotulo: texto.slice(0, 90),
+        detalhe: el.dataset.copy,
+        busca: `${texto} ${el.dataset.copy}`,
+        fazer: () => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ce-mira');
+          setTimeout(() => el.classList.remove('ce-mira'), 1200);
+          if (ligado && el.isContentEditable) el.focus();
+        },
+      });
+    }
+    return out;
+  }
+
+  function filtrarPaleta() {
+    const q = norm(pInput.value.trim());
+    const todos = fonteDaPaleta();
+    pItens = q ? todos.filter((i) => norm(i.busca).includes(q)) : todos;
+    pItens = pItens.slice(0, 60);
+    pSel = 0;
+    pLista.innerHTML = '';
+    pItens.forEach((it, i) => {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.dataset.i = i;
+      const tipo = document.createElement('span');
+      tipo.className = 'ce-p-tipo';
+      tipo.textContent = it.tipo;
+      const rot = document.createElement('span');
+      rot.className = 'ce-p-rot';
+      rot.textContent = it.rotulo;
+      li.append(tipo, rot);
+      if (it.detalhe || it.tecla) {
+        const d = document.createElement(it.tecla ? 'kbd' : 'span');
+        d.className = 'ce-p-det';
+        d.textContent = it.tecla || it.detalhe;
+        li.append(d);
+      }
+      li.onmousemove = () => marcarPaleta(i);
+      li.onclick = () => executarPaleta(i);
+      pLista.append(li);
+    });
+    if (!pItens.length) pLista.innerHTML = '<li class="ce-p-vazio">Nada encontrado.</li>';
+    marcarPaleta(0);
+  }
+  function marcarPaleta(i) {
+    pSel = Math.max(0, Math.min(i, pItens.length - 1));
+    for (const li of pLista.children) li.setAttribute('aria-selected', String(Number(li.dataset.i) === pSel));
+    pLista.children[pSel]?.scrollIntoView({ block: 'nearest' });
+  }
+  function executarPaleta(i) {
+    const it = pItens[i];
+    abrirPaleta(false);
+    if (it) setTimeout(it.fazer, 0);
+  }
+  const paletaAberta = () => paleta.dataset.aberto === '1';
+  function abrirPaleta(abre) {
+    paleta.dataset.aberto = abre ? '1' : '0';
+    if (abre) {
+      pInput.value = '';
+      filtrarPaleta();
+      /* Foco na hora (a caixa já está visível): com setTimeout, quem digitasse rápido
+         mandava as letras pros atalhos da barra (o "e" de "celular" pausava a edição). */
+      pInput.focus();
+    } else pInput.blur();
+  }
+  pInput.addEventListener('input', filtrarPaleta);
+  pInput.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'ArrowDown') (e.preventDefault(), marcarPaleta(pSel + 1));
+    else if (e.key === 'ArrowUp') (e.preventDefault(), marcarPaleta(pSel - 1));
+    else if (e.key === 'Enter') (e.preventDefault(), executarPaleta(pSel));
+    else if (e.key === 'Escape') abrirPaleta(false);
+  });
+  paleta.addEventListener('mousedown', (e) => {
+    if (e.target === paleta) abrirPaleta(false);
+  });
+
+  /* Teclas novas: ⌘/Ctrl+K e F. Em captura, antes do teclado da v2, pra o ⌘K valer até
+     com foco num texto editável (é a saída rápida de qualquer lugar). */
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        abrirPaleta(!paletaAberta());
+        return;
+      }
+      if (paletaAberta() && e.target !== pInput) {
+        if (e.key === 'Escape') abrirPaleta(false);
+        else pInput.focus();
+        e.stopImmediatePropagation();
+        return;
+      }
+      if (e.key === 'Escape' && filaAberta() && !paletaAberta()) {
+        const a = document.activeElement;
+        if (a && filaPainel.contains(a) && a.tagName === 'TEXTAREA') return;
+        e.stopImmediatePropagation();
+        abrirFila(false);
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey || emCampo()) return;
+      if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        filaBt.click();
+      }
+    },
+    true
+  );
+
+  /* A lista de atalhos ganha as teclas novas. */
+  for (const [k, v] of [
+    ['F', 'comentários (pins numerados, thread, feito)'],
+    ['⌘/Ctrl+K', 'buscar texto, chave, comentário ou ação'],
+  ]) {
+    const dt = document.createElement('dt');
+    const kbd = document.createElement('kbd');
+    kbd.textContent = k;
+    dt.append(kbd);
+    const dd = document.createElement('dd');
+    dd.textContent = v;
+    dl.append(dt, dd);
+  }
 })();

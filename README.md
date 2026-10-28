@@ -173,3 +173,13 @@ migrar/idioma.mjs        o texto do JSX está em en? (heurística, só com folga
 ```
 
 `npm test` roda núcleo, adapters, writer, detecção e migrar gravando em diretório temporário.
+
+## Comentários: designer ↔ agente (barra v3)
+
+Tecla **C** (ou Alt+clique) num elemento: o pin numerado fica no ponto do clique e o pedido vai pra
+`docs/COMENTARIOS-IA.md`. **F** abre os comentários com thread; **⌘/Ctrl+K** busca ações, textos e `#n`.
+Pin claro = aguardando o agente, laranja = o agente leu, cinza = feito; ponto vermelho = o agente respondeu.
+
+O agente, com o editor no ar: `GET /__copy/comentarios?todas=1&agente=1` (marca como lido),
+`POST /__copy/comentario/responder {id, autor: "ia", texto}` e
+`POST /__copy/comentario/status {id, estado: "feito", autor: "ia", texto}`. Detalhes em PLAN-BARRA-V3.md.

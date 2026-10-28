@@ -218,19 +218,34 @@ export function rodarLint(root, script, arquivo, prefixo = '') {
    docs/COMENTARIOS-IA.md, com rota e seletor do elemento. O Claude lê o
    arquivo, faz a tarefa, roda o check e marca [x]. Markdown e não JSON porque
    a fila é pra humano ler também, e fica no git. */
-export const LINHA_COMENTARIO = /^- \[( |x)\] `([^`]*)` `([^`]*)`(?: · "([^"]*)")? · (.*)$/;
+export const LINHA_COMENTARIO =
+  /^- \[( |~|x)\] (?:#(\d+) )?`([^`]*)` `([^`]*)`(?: @(\d{1,3}),(\d{1,3}))?(?: · "([^"]*)")? · (.*)$/;
+const ESTADO = { ' ': 'aberto', '~': 'lido', x: 'feito' };
+const MARCA = { aberto: ' ', lido: '~', feito: 'x' };
+/* Resposta da thread: sub-item indentado logo abaixo do comentário. */
+export const LINHA_RESPOSTA = /^ {2,}- (designer|ia): (.*)$/;
 
 export const cabecalhoComentarios = (dica) => `# Comentários pra IA
 
-Fila escrita pelo \`npm run copy:edit\` (Alt+clique em qualquer elemento).
-Cada linha: rota, seletor CSS, trecho do texto do elemento e o pedido.
+Fila escrita pelo \`npm run copy:edit\` (tecla C ou Alt+clique em qualquer elemento).
+Cada linha: estado, número, rota, seletor CSS, ponto do pin (@x,y em %), trecho e o pedido.
+Estado: \`[ ]\` aberto, \`[~]\` o agente leu e está fazendo, \`[x]\` feito.
+Respostas ficam indentadas embaixo (\`  - ia: ...\` / \`  - designer: ...\`).
 Pra rodar, peça ao Claude "processa os comentários": ele faz cada \`[ ]\`,
-roda o \`npm run check\` e marca \`[x]\`. ${dica}
+roda o \`npm run check\`, responde na thread e marca \`[x]\`.
+Com o editor no ar, o agente também usa a API: GET /__copy/comentarios?todas=1&agente=1
+(marca os abertos como lidos, e o designer vê na barra que o agente pegou),
+POST /__copy/comentario/responder {id, autor: "ia", texto} e
+POST /__copy/comentario/status {id, estado: "lido"|"feito"|"aberto", autor: "ia", texto}. ${dica}
 
 `;
 
 /* `limpar` tira a chave invisível do stega (next-intl): o texto do elemento
-   chega com ela junto, e no .md ela vira lixo que ninguém vê mas o diff vê. */
+   chega com ela junto, e no .md ela vira lixo que ninguém vê mas o diff vê.
+
+   Formato v3: cada comentário tem número (`#7`) e thread. Linha antiga, sem
+   número, ganha o número da posição na leitura e é reescrita com ele na
+   primeira mudança, então fila velha continua valendo. */
 export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
   const arquivo = join(root, 'docs', 'COMENTARIOS-IA.md');
 
@@ -242,31 +257,151 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
       .trim()
       .slice(0, n);
 
-  function ler() {
-    if (!existsSync(arquivo)) return [];
-    return readFileSync(arquivo, 'utf8')
-      .split(/\r?\n/)
-      .map((l) => l.match(LINHA_COMENTARIO))
-      .filter(Boolean)
-      .map((m) => ({ feito: m[1] === 'x', pagina: m[2], seletor: m[3], texto: m[5] }));
+  /* O arquivo inteiro: cabeçalho (tudo antes do 1º comentário) e os itens. */
+  function parse() {
+    if (!existsSync(arquivo)) return { cabecalho: cabecalhoComentarios(dica), itens: [] };
+    const linhas = readFileSync(arquivo, 'utf8').split(/\r?\n/);
+    const itens = [];
+    let cabecalho = null;
+    for (let i = 0; i < linhas.length; i++) {
+      const m = linhas[i].match(LINHA_COMENTARIO);
+      if (m) {
+        if (cabecalho === null) cabecalho = linhas.slice(0, i).join('\n') + '\n';
+        itens.push({
+          id: m[2] ? Number(m[2]) : null,
+          estado: ESTADO[m[1]],
+          feito: m[1] === 'x',
+          pagina: m[3],
+          seletor: m[4],
+          pos: m[5] ? { x: Number(m[5]), y: Number(m[6]) } : null,
+          trecho: m[7] || '',
+          texto: m[8],
+          respostas: [],
+        });
+        continue;
+      }
+      const r = linhas[i].match(LINHA_RESPOSTA);
+      if (r && itens.length) itens[itens.length - 1].respostas.push({ autor: r[1], texto: r[2] });
+    }
+    if (cabecalho === null) cabecalho = linhas.join('\n').replace(/\n*$/, '\n\n');
+    let max = itens.reduce((n, c) => Math.max(n, c.id || 0), 0);
+    for (const c of itens) if (!c.id) c.id = ++max;
+    return { cabecalho, itens };
+  }
+
+  function escrever({ cabecalho, itens }) {
+    const corpo = itens
+      .map(
+        (c) =>
+          `- [${MARCA[c.estado] || ' '}] #${c.id} \`${c.pagina}\` \`${c.seletor}\`` +
+          (c.pos ? ` @${c.pos.x},${c.pos.y}` : '') +
+          (c.trecho ? ` · "${c.trecho}"` : '') +
+          ` · ${c.texto}\n` +
+          c.respostas.map((r) => `  - ${r.autor}: ${r.texto}\n`).join('')
+      )
+      .join('');
+    mkdirSync(dirname(arquivo), { recursive: true });
+    writeFileSync(arquivo, cabecalho + corpo);
+  }
+
+  const autorDe = (a) => (a === 'ia' ? 'ia' : 'designer');
+  const achar = (fila, id) => fila.itens.find((c) => c.id === Number(id));
+
+  const pct = (n) => Math.max(0, Math.min(100, Math.round(Number(n))));
+  const posDe = (p) =>
+    p && Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.y)) ? { x: pct(p.x), y: pct(p.y) } : null;
+  const mudarEstado = (c, estado) => {
+    c.estado = estado;
+    c.feito = estado === 'feito';
+  };
+
+  /* O que a barra e o agente recebem: id, estado (aberto|lido|feito), feito, pagina,
+     seletor, pos, trecho, texto, respostas.
+
+     `agente: true` é o agente lendo a fila: o que estava aberto vira lido, e é assim que
+     o designer vê na barra, sem ninguém responder nada, que o pedido foi pego. */
+  function ler({ agente = false } = {}) {
+    const fila = parse();
+    if (agente && fila.itens.some((c) => c.estado === 'aberto')) {
+      for (const c of fila.itens) if (c.estado === 'aberto') mudarEstado(c, 'lido');
+      escrever(fila);
+    }
+    return fila.itens;
   }
 
   function comentar(dados) {
     const texto = umaLinha(dados.texto, 2000);
     const seletor = umaLinha(dados.seletor, 300);
     if (!texto || !seletor) return { erro: 'comentário vazio' };
-    const trecho = umaLinha(dados.trecho, 80).replace(/"/g, "'");
-    const linha =
-      `- [ ] \`${umaLinha(dados.pagina, 80) || '/'}\` \`${seletor}\`` +
-      (trecho ? ` · "${trecho}"` : '') +
-      ` · ${texto}\n`;
-    const atual = existsSync(arquivo) ? readFileSync(arquivo, 'utf8') : cabecalhoComentarios(dica);
-    mkdirSync(dirname(arquivo), { recursive: true });
-    writeFileSync(arquivo, atual + linha);
-    return { ok: true, arquivo: 'docs/COMENTARIOS-IA.md' };
+    const fila = parse();
+    const id = fila.itens.reduce((n, c) => Math.max(n, c.id), 0) + 1;
+    const comentario = {
+      id,
+      estado: 'aberto',
+      feito: false,
+      pagina: umaLinha(dados.pagina, 80) || '/',
+      seletor,
+      pos: posDe(dados.pos),
+      trecho: umaLinha(dados.trecho, 80).replace(/"/g, "'"),
+      texto,
+      respostas: [],
+    };
+    fila.itens.push(comentario);
+    escrever(fila);
+    return { ok: true, id, comentario, arquivo: 'docs/COMENTARIOS-IA.md' };
   }
 
-  return { ler, comentar, arquivo };
+  /* Resposta na thread. `autor` é 'ia' (o agente) ou 'designer' (a barra). */
+  function responder(dados) {
+    const texto = umaLinha(dados.texto, 2000);
+    if (!texto) return { erro: 'resposta vazia' };
+    const fila = parse();
+    const c = achar(fila, dados.id);
+    if (!c) return { erro: `comentário #${dados.id} não existe` };
+    c.respostas.push({ autor: autorDe(dados.autor), texto });
+    /* Designer respondendo depois que o agente pegou: volta pra fila dele. */
+    if (autorDe(dados.autor) === 'designer' && c.estado === 'lido') mudarEstado(c, 'aberto');
+    escrever(fila);
+    return { ok: true, comentario: c };
+  }
+
+  /* O designer corrige o próprio pedido. Volta pra aberto: o agente precisa ler de novo. */
+  function editar(dados) {
+    const texto = umaLinha(dados.texto, 2000);
+    if (!texto) return { erro: 'comentário vazio' };
+    const fila = parse();
+    const c = achar(fila, dados.id);
+    if (!c) return { erro: `comentário #${dados.id} não existe` };
+    c.texto = texto;
+    if (c.estado === 'lido') mudarEstado(c, 'aberto');
+    escrever(fila);
+    return { ok: true, comentario: c };
+  }
+
+  function apagar(dados) {
+    const fila = parse();
+    const c = achar(fila, dados.id);
+    if (!c) return { erro: `comentário #${dados.id} não existe` };
+    fila.itens = fila.itens.filter((x) => x !== c);
+    escrever(fila);
+    return { ok: true, id: c.id };
+  }
+
+  /* Feito/aberto. Normalmente o agente marca feito e o designer reabre ("ainda
+     não"). Com `texto`, a mudança já vem explicada na thread. */
+  function status(dados) {
+    const fila = parse();
+    const c = achar(fila, dados.id);
+    if (!c) return { erro: `comentário #${dados.id} não existe` };
+    const estado = ESTADO[MARCA[dados.estado]] ? dados.estado : dados.feito ? 'feito' : 'aberto';
+    mudarEstado(c, estado);
+    const texto = umaLinha(dados.texto, 2000);
+    if (texto) c.respostas.push({ autor: autorDe(dados.autor), texto });
+    escrever(fila);
+    return { ok: true, comentario: c };
+  }
+
+  return { ler, comentar, responder, editar, apagar, status, arquivo };
 }
 
 /* O `next dev` do repo, com as flags do editor. `COPY_EDIT=1` liga o stega no
@@ -342,7 +477,11 @@ export function criarServidor(root, adapter) {
       return json(res, r.status, r.corpo);
     }
     if (caminho === '/__copy/comentarios') {
-      return json(res, 200, { itens: fila.ler().filter((c) => c.pagina === pagina) });
+      /* `todas=1` é a fila inteira, o que o agente lê; sem ele, só a página. */
+      const q = new URL(url, 'http://x').searchParams;
+      const todas = q.get('todas') === '1';
+      const itens = fila.ler({ agente: q.get('agente') === '1' });
+      return json(res, 200, { itens: todas ? itens : itens.filter((c) => c.pagina === pagina) });
     }
     if (caminho === '/__copy/tokens') {
       return json(res, 200, { tokens: adapter.tokens() });
@@ -361,6 +500,22 @@ export function criarServidor(root, adapter) {
 
     if (caminho === '/__copy/comentar') {
       const r = fila.comentar(dados);
+      return json(res, r.erro ? 400 : 200, r);
+    }
+    if (caminho === '/__copy/comentario/responder') {
+      const r = fila.responder(dados);
+      return json(res, r.erro ? 400 : 200, r);
+    }
+    if (caminho === '/__copy/comentario/editar') {
+      const r = fila.editar(dados);
+      return json(res, r.erro ? 400 : 200, r);
+    }
+    if (caminho === '/__copy/comentario/apagar') {
+      const r = fila.apagar(dados);
+      return json(res, r.erro ? 400 : 200, r);
+    }
+    if (caminho === '/__copy/comentario/status') {
+      const r = fila.status(dados);
       return json(res, r.erro ? 400 : 200, r);
     }
     if (caminho === '/__copy/token') {

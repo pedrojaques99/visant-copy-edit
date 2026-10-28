@@ -27,6 +27,12 @@ const ICONES = {
   menu: 'list',
   fechar: 'x',
   alca: 'dots-six-vertical',
+  fila: 'chats-circle',
+  busca: 'magnifying-glass',
+  check: 'check',
+  reabrir: 'arrow-u-up-left',
+  enviar: 'paper-plane-right',
+  apagar: 'trash',
 };
 
 const mapa = Object.fromEntries(
