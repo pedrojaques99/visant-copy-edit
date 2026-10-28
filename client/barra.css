@@ -59,81 +59,216 @@
   outline-color: var(--ce-fg);
 }
 
-/* ── barra ───────────────────────────────────────────────────────────────── */
+/* ── barra v2 (PLAN-BARRA-V2.md) ──────────────────────────────────────────
+   Pílula vertical de ícones, no canto que a pessoa escolher (arrastando o menu). Cinza e
+   quieta como o resto do editor: a página é o que se está julgando, não a ferramenta. */
 .ce-barra {
+  --ce-bt: 36px;
   position: fixed;
-  left: 16px;
-  bottom: 16px;
   z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--ce-card);
+  border: 1px solid var(--ce-line);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 12px 32px rgba(0, 0, 0, 0.45);
+  color: var(--ce-muted);
+  font:
+    12px/1.4 'Red Hat Mono',
+    ui-monospace,
+    monospace;
+  touch-action: none;
+  user-select: none;
+}
+.ce-barra[data-lado='direita'] { right: 16px; }
+.ce-barra[data-lado='esquerda'] { left: 16px; }
+.ce-barra[data-altura='baixo'] { bottom: 16px; }
+.ce-barra[data-altura='cima'] { top: 16px; }
+.ce-barra[data-altura='cima'] { flex-direction: column-reverse; }
+.ce-barra.ce-arrastando { cursor: grabbing; opacity: 0.85; }
+
+.ce-grupo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ce-barra[data-altura='cima'] .ce-grupo { flex-direction: column-reverse; }
+.ce-barra[data-recolhida='1'] .ce-grupo { display: none; }
+
+.ce-bt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--ce-bt);
+  height: var(--ce-bt);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ce-muted);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+.ce-bt:hover { background: #222226; color: var(--ce-fg); }
+.ce-bt:focus-visible { outline: 2px solid var(--ce-fg); outline-offset: 1px; }
+.ce-bt[aria-pressed='true'] { background: var(--ce-fg); color: var(--ce-card); }
+.ce-bt:disabled { opacity: 0.35; cursor: default; background: transparent; color: var(--ce-muted); }
+.ce-bt svg { display: block; }
+
+.ce-sep {
+  width: 18px;
+  height: 1px;
+  margin: 3px 0;
+  background: var(--ce-line);
+}
+
+/* O menu é a alça: clique recolhe, arraste move. */
+.ce-menu { cursor: grab; }
+.ce-barra[data-recolhida='1'] .ce-menu { color: var(--ce-fg); }
+/* Ponto de status: o lint acusou algo e o recado ainda está aberto. */
+.ce-menu::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ce-erro);
+  box-shadow: 0 0 0 2px var(--ce-card);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.ce-barra[data-alerta='1'] .ce-menu::after { opacity: 1; }
+
+/* ── tooltip: nome + tecla ─────────────────────────────────────────────── */
+.ce-dica {
+  position: fixed;
+  z-index: 10001;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  background: var(--ce-card);
-  border: 1px solid var(--ce-line);
-  border-radius: 4px;
+  padding: 6px 6px 6px 10px;
+  background: #000;
+  color: var(--ce-fg);
+  border-radius: 8px;
   font:
-    11px/1.5 'Red Hat Mono',
+    500 12px/1.2 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  translate: 0 2px;
+  transition:
+    opacity 120ms ease,
+    translate 120ms ease;
+}
+.ce-dica[data-aberto='1'] { opacity: 1; translate: 0 0; }
+.ce-dica kbd,
+.ce-ajuda kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: var(--ce-fg);
+  color: #000;
+  font:
+    600 11px/1 'Red Hat Mono',
     ui-monospace,
     monospace;
-  letter-spacing: 0.04em;
-  color: var(--ce-muted);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-.ce-barra button {
-  font: inherit;
-  color: var(--ce-fg);
-  background: transparent;
-  border: 1px solid var(--ce-line);
-  border-radius: 2px;
-  padding: 3px 8px;
-  cursor: pointer;
-}
-.ce-barra button:hover {
-  border-color: var(--ce-fg);
-}
-.ce-barra b {
-  color: var(--ce-fg);
-  font-weight: 400;
-}
-.ce-off .ce-alvo {
-  outline: none;
-  cursor: auto;
-}
-.ce-off .ce-alvo::after {
-  content: none;
 }
 
-/* ── recado ──────────────────────────────────────────────────────────────── */
+/* ── recado: toast compacto ao lado da barra ───────────────────────────── */
 .ce-recado {
   position: fixed;
-  left: 16px;
-  bottom: 62px;
+  bottom: 16px;
   z-index: 10000;
-  max-width: min(520px, calc(100vw - 32px));
-  padding: 10px 12px;
+  max-width: min(440px, calc(100vw - 96px));
+  padding: 10px 14px;
   background: var(--ce-card);
   border: 1px solid var(--ce-line);
-  border-left: 2px solid var(--ce-muted);
-  border-radius: 3px;
+  border-radius: 12px;
   font:
-    11px/1.6 'Red Hat Mono',
+    12px/1.55 'Red Hat Mono',
     ui-monospace,
     monospace;
   color: var(--ce-muted);
   white-space: pre-wrap;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
+body[data-ce-lado='direita'] .ce-recado { right: 72px; }
+body[data-ce-lado='esquerda'] .ce-recado { left: 72px; }
 .ce-recado[data-tipo='erro'] {
-  border-left-color: var(--ce-erro);
+  border-color: color-mix(in srgb, var(--ce-erro) 55%, var(--ce-line));
   color: var(--ce-fg);
 }
-.ce-recado b {
+.ce-recado b { color: var(--ce-fg); font-weight: 400; }
+.ce-recado:empty { display: none; }
+
+/* ── modo comentário ───────────────────────────────────────────────────── */
+.ce-comentando,
+.ce-comentando * { cursor: crosshair !important; }
+.ce-comentando .ce-alvo::after { content: none; }
+
+/* ── lista de atalhos ──────────────────────────────────────────────────── */
+.ce-ajuda {
+  position: fixed;
+  bottom: 16px;
+  z-index: 10002;
+  width: min(340px, calc(100vw - 96px));
+  padding: 14px 16px 16px;
+  background: var(--ce-card);
+  border: 1px solid var(--ce-line);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
   color: var(--ce-fg);
-  font-weight: 400;
-}
-.ce-recado:empty {
+  font:
+    13px/1.4 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
   display: none;
+}
+body[data-ce-lado='direita'] .ce-ajuda { right: 72px; }
+body[data-ce-lado='esquerda'] .ce-ajuda { left: 72px; }
+.ce-ajuda[data-aberto='1'] { display: block; }
+.ce-ajuda header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.ce-ajuda header b { font-weight: 600; }
+.ce-ajuda header button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ce-muted);
+  cursor: pointer;
+}
+.ce-ajuda header button:hover { background: #222226; color: var(--ce-fg); }
+.ce-ajuda dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0; align-items: center; }
+.ce-ajuda dd { margin: 0; color: var(--ce-muted); }
+
+.ce-off .ce-alvo { outline: none; cursor: auto; }
+.ce-off .ce-alvo::after { content: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ce-bt,
+  .ce-dica,
+  .ce-menu::after { transition: none; }
 }
 
 /* ── painel das chaves sem cara ───────────────────────────────────────────
@@ -550,3 +685,12 @@
   background: var(--ce-fg) !important;
   border-color: var(--ce-fg) !important;
 }
+
+/* ── barra v2 x painéis: os dois painéis moram na borda direita; com a barra desse lado,
+   ela anda pra fora deles em vez de ficar por cima do conteúdo. */
+.ce-barra { transition: right 0.21s cubic-bezier(0.32, 0.72, 0, 1); }
+body:has(.ce-painel[data-aberto='1']) .ce-barra[data-lado='direita'] { right: calc(min(420px, 92vw) + 12px); }
+body.ce-com-regua .ce-barra[data-lado='direita'] { right: calc(min(460px, 96vw) + 12px); }
+body:has(.ce-painel[data-aberto='1']) .ce-recado,
+body.ce-com-regua .ce-recado { right: auto; left: 16px; }
+@media (prefers-reduced-motion: reduce) { .ce-barra { transition: none; } }

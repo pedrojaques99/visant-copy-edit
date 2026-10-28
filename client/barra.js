@@ -20,12 +20,45 @@
      contenteditable normal, então o innerText continua sendo a leitura. */
   const MODO = 'plaintext-only';
 
+/* ICONES:INICIO (gerado por npm run vendor:icones, @phosphor-icons/core 2.1.1; não edite) */
+  const ICONES = {
+    "editar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z\"/></svg>",
+    "pausar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/></svg>",
+    "comentar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Zm0,192a87.87,87.87,0,0,1-44.06-11.81,8,8,0,0,0-6.54-.67L40,216,52.47,178.6a8,8,0,0,0-.66-6.54A88,88,0,1,1,128,216Z\"/></svg>",
+    "textos": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M32,64a8,8,0,0,1,8-8H216a8,8,0,0,1,0,16H40A8,8,0,0,1,32,64Zm8,72h72a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16Zm88,48H40a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16Zm109.66,13.66a8,8,0,0,1-11.32,0L206,177.36A40,40,0,1,1,217.36,166l20.3,20.3A8,8,0,0,1,237.66,197.66ZM184,168a24,24,0,1,0-24-24A24,24,0,0,0,184,168Z\"/></svg>",
+    "celular": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM72,64H184V192H72Zm8-32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z\"/></svg>",
+    "desfazer": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z\"/></svg>",
+    "atalhos": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,144H32V64H224V192Zm-16-64a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,128Zm0-32a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,96ZM72,160a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16h8A8,8,0,0,1,72,160Zm96,0a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,160Zm40,0a8,8,0,0,1-8,8h-8a8,8,0,0,1,0-16h8A8,8,0,0,1,208,160Z\"/></svg>",
+    "menu": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z\"/></svg>",
+    "fechar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/></svg>",
+    "alca": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M104,60A12,12,0,1,1,92,48,12,12,0,0,1,104,60Zm60,12a12,12,0,1,0-12-12A12,12,0,0,0,164,72ZM92,116a12,12,0,1,0,12,12A12,12,0,0,0,92,116Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,116ZM92,184a12,12,0,1,0,12,12A12,12,0,0,0,92,184Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,184Z\"/></svg>"
+  };
+  /* ICONES:FIM */
+
+  /* ── barra v2 (PLAN-BARRA-V2.md): pílula vertical de ícones, cada botão com tooltip e a
+     tecla dele. As classes antigas (.ce-toggle, .ce-chaves, .ce-regua, .ce-desfazer, .ce-n)
+     continuam: o resto do arquivo pendura a lógica nelas. */
+  const botao = (cls, icone, rotulo, tecla, extra = '') =>
+    `<button type="button" class="ce-bt ${cls}" data-dica="${rotulo}" data-tecla="${tecla}" aria-label="${rotulo}" aria-keyshortcuts="${tecla}" ${extra}>${ICONES[icone] || ''}</button>`;
   const barra = document.createElement('div');
   barra.className = 'ce-barra';
+  barra.setAttribute('role', 'toolbar');
+  barra.setAttribute('aria-label', 'editor de copy');
   barra.innerHTML =
-    '<span>copy</span><b class="ce-n"></b><button class="ce-toggle">pausar</button>' +
-    '<button class="ce-chaves">chaves</button><button class="ce-regua">375</button>' +
-    '<button class="ce-desfazer" disabled>desfazer</button>';
+    '<div class="ce-grupo">' +
+    botao('ce-toggle', 'pausar', 'Pausar edição', 'E', 'aria-pressed="false"') +
+    botao('ce-comentar', 'comentar', 'Comentar', 'C', 'aria-pressed="false"') +
+    botao('ce-chaves', 'textos', 'Textos sem cara', 'K') +
+    botao('ce-regua', 'celular', 'Ver no celular', 'M') +
+    botao('ce-desfazer', 'desfazer', 'Desfazer', '⌘Z', 'disabled') +
+    '<span class="ce-sep" aria-hidden="true"></span>' +
+    botao('ce-atalhos', 'atalhos', 'Atalhos', '?') +
+    '</div>' +
+    botao('ce-menu', 'menu', 'Recolher', '', 'aria-expanded="true"') +
+    '<b class="ce-n" hidden></b>';
+  const dica = document.createElement('div');
+  dica.className = 'ce-dica';
+  dica.setAttribute('role', 'tooltip');
   const recado = document.createElement('div');
   recado.className = 'ce-recado';
 
@@ -36,7 +69,7 @@
     '<div class="ce-idioma" hidden></div>' +
     '<div class="ce-lista"></div>';
 
-  document.body.append(barra, recado, painel);
+  document.body.append(barra, recado, painel, dica);
 
   const nEl = barra.querySelector('.ce-n');
   let ligado = true;
@@ -44,6 +77,7 @@
   function diz(texto, tipo) {
     recado.textContent = texto || '';
     recado.dataset.tipo = tipo || '';
+    barra.dataset.alerta = texto && tipo === 'erro' ? '1' : '';
     clearTimeout(diz.t);
     if (texto && tipo !== 'erro') diz.t = setTimeout(() => (recado.textContent = ''), 4000);
   }
@@ -709,6 +743,7 @@
     const texto = notaTxt.value.trim();
     nota.dataset.aberto = '0';
     alvoNota = null;
+    notaTxt.blur();
     if (!el || !texto) return;
     const r = await fetch('/__copy/comentar', {
       method: 'POST',
@@ -735,6 +770,8 @@
     if (e.key === 'Escape') {
       nota.dataset.aberto = '0';
       alvoNota = null;
+      /* Sem o blur o foco ficava no campo escondido e as teclas (E, C, K) viravam texto. */
+      notaTxt.blur();
     }
   });
 
@@ -867,6 +904,7 @@
   const alvos = editaveis();
   alvos.forEach(preparar);
   nEl.textContent = alvos.length + ' na tela';
+  barra.querySelector('.ce-toggle').dataset.extra = nEl.textContent;
 
   /* ── desfazer ─────────────────────────────────────────────────────────── */
   async function desfazer() {
@@ -935,13 +973,18 @@
     barra.querySelector('.ce-toggle').click();
   });
 
-  barra.querySelector('.ce-toggle').onclick = (e) => {
+  barra.querySelector('.ce-toggle').onclick = () => {
     ligado = !ligado;
     document.body.classList.toggle('ce-off', !ligado);
     alvos.forEach((el) => {
       if (!ehControle(el)) el.contentEditable = ligado ? MODO : 'false';
     });
-    e.target.textContent = ligado ? 'pausar' : 'editar';
+    const bt = barra.querySelector('.ce-toggle');
+    bt.innerHTML = ICONES[ligado ? 'pausar' : 'editar'] || '';
+    bt.dataset.dica = ligado ? 'Pausar edição' : 'Retomar edição';
+    bt.setAttribute('aria-label', bt.dataset.dica);
+    bt.setAttribute('aria-pressed', String(!ligado));
+    if (!ligado) modoComentar(false);
     diz(ligado ? '' : 'pausado (E retoma), a página volta a se comportar como no ar');
   };
 
@@ -1035,4 +1078,219 @@
       document.body.classList.remove('ce-com-regua');
     }
   };
+
+  /* ══ barra v2: comportamento da casca (PLAN-BARRA-V2.md) ══════════════════════════════ */
+
+  /* Contagem vai pro tooltip do pausar, não pra um rótulo solto na barra. */
+  const editarBt = barra.querySelector('.ce-toggle');
+  editarBt.dataset.extra = nEl.textContent;
+
+  /* Tooltip: nome + tecla, do lado de dentro da tela. Abre no hover e no foco do teclado. */
+  function mostrarDica(bt) {
+    const tecla = bt.dataset.tecla;
+    dica.innerHTML = '';
+    const t = document.createElement('span');
+    t.textContent = bt.dataset.dica + (bt.dataset.extra ? ' · ' + bt.dataset.extra : '');
+    dica.append(t);
+    if (tecla) {
+      const k = document.createElement('kbd');
+      k.textContent = tecla;
+      dica.append(k);
+    }
+    const r = bt.getBoundingClientRect();
+    dica.dataset.aberto = '1';
+    const w = dica.offsetWidth;
+    const h = dica.offsetHeight;
+    const praEsquerda = barra.dataset.lado !== 'esquerda';
+    dica.style.left = (praEsquerda ? r.left - w - 10 : r.right + 10) + 'px';
+    dica.style.top = r.top + r.height / 2 - h / 2 + 'px';
+  }
+  const esconderDica = () => (dica.dataset.aberto = '0');
+  barra.addEventListener('pointerover', (e) => {
+    const bt = e.target.closest('.ce-bt');
+    if (bt && !arrasto) mostrarDica(bt);
+  });
+  barra.addEventListener('pointerleave', esconderDica);
+  barra.addEventListener('focusin', (e) => {
+    const bt = e.target.closest('.ce-bt');
+    if (bt && bt.matches(':focus-visible')) mostrarDica(bt);
+  });
+  barra.addEventListener('focusout', esconderDica);
+  barra.addEventListener('click', esconderDica);
+
+  /* ── modo comentário (C) ─────────────────────────────────────────────────
+     O mesmo comentário do Alt+clique, sem precisar segurar tecla: liga, a mira segue o
+     ponteiro, um clique abre a nota e o modo desliga. Escuta no window em captura, que roda
+     antes dos handlers de document: o clique não chega no site nem no campo de edição. */
+  let comentando = false;
+  const comentarBt = barra.querySelector('.ce-comentar');
+  function modoComentar(liga) {
+    comentando = liga === undefined ? !comentando : liga;
+    comentarBt.setAttribute('aria-pressed', String(comentando));
+    document.body.classList.toggle('ce-comentando', comentando);
+    if (!comentando) tirarMira();
+    else diz('clique no elemento pra comentar (Esc cancela)');
+  }
+  comentarBt.onclick = () => {
+    if (!ligado) barra.querySelector('.ce-toggle').click();
+    modoComentar();
+  };
+  window.addEventListener(
+    'mouseover',
+    (e) => {
+      if (!comentando || e.target.closest(UI)) return;
+      tirarMira();
+      mira = e.target;
+      mira.classList.add('ce-mira');
+    },
+    true
+  );
+  for (const tipo of ['pointerdown', 'mousedown']) {
+    window.addEventListener(
+      tipo,
+      (e) => {
+        if (comentando && !e.target.closest(UI)) e.preventDefault();
+      },
+      true
+    );
+  }
+  window.addEventListener(
+    'click',
+    (e) => {
+      if (!comentando || e.target.closest(UI)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const alvo = e.target;
+      modoComentar(false);
+      abrirNota(alvo, e.clientX, e.clientY);
+      setTimeout(() => notaTxt.focus(), 0);
+    },
+    true
+  );
+
+  /* ── lista de atalhos (?) ───────────────────────────────────────────── */
+  const ajuda = document.createElement('div');
+  ajuda.className = 'ce-ajuda';
+  ajuda.setAttribute('role', 'dialog');
+  ajuda.setAttribute('aria-label', 'atalhos do editor');
+  const ATALHOS = [
+    ['Clique no texto', 'editar'],
+    ['Enter', 'salvar'],
+    ['Esc', 'desfazer a edição ou fechar'],
+    ['E', 'pausar ou retomar'],
+    ['C', 'comentar (ou Alt+clique)'],
+    ['K', 'textos sem cara (alt, title, og)'],
+    ['M', 'ver no celular'],
+    ['⌘/Ctrl+Z', 'desfazer o último save'],
+    ['⌘/Ctrl+clique', 'clicar como no site'],
+    ['?', 'esta lista'],
+  ];
+  ajuda.innerHTML =
+    '<header><b>Atalhos</b><button type="button" class="ce-ajuda-fechar" aria-label="fechar">' +
+    (ICONES.fechar || '×') +
+    '</button></header><dl></dl>';
+  const dl = ajuda.querySelector('dl');
+  for (const [k, v] of ATALHOS) {
+    const dt = document.createElement('dt');
+    const kbd = document.createElement('kbd');
+    kbd.textContent = k;
+    dt.append(kbd);
+    const dd = document.createElement('dd');
+    dd.textContent = v;
+    dl.append(dt, dd);
+  }
+  document.body.append(ajuda);
+  const ajudaAberta = (abre) => (ajuda.dataset.aberto = abre ? '1' : '0');
+  barra.querySelector('.ce-atalhos').onclick = () => ajudaAberta(ajuda.dataset.aberto !== '1');
+  ajuda.querySelector('.ce-ajuda-fechar').onclick = () => ajudaAberta(false);
+
+  /* ── teclado da casca ────────────────────────────────────────────────── */
+  const emCampo = () => {
+    const a = document.activeElement;
+    return a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+  };
+  const TECLAS = { c: '.ce-comentar', k: '.ce-chaves', m: '.ce-regua', '?': '.ce-atalhos' };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (comentando) return modoComentar(false);
+      if (ajuda.dataset.aberto === '1') return ajudaAberta(false);
+      if (painel.dataset.aberto === '1') return (painel.dataset.aberto = '0');
+      if (reguaAberta()) return regua.querySelector('.ce-regua-fechar').click();
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey || emCampo()) return;
+    const acao = TECLAS[e.key === '?' ? '?' : e.key.toLowerCase()];
+    if (!acao) return;
+    e.preventDefault();
+    barra.querySelector(acao).click();
+  });
+
+  /* ── recolher e arrastar ────────────────────────────────────────────────
+     Recolhida, a barra vira só o botão de menu. Arrastada pelo menu, ela gruda no canto
+     mais perto (quatro cantos, como a toolbar da Vercel) e lembra onde ficou. */
+  const GUARDA = 'ce-barra-v2';
+  const estado = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(GUARDA)) || {};
+    } catch {
+      return {};
+    }
+  })();
+  const guardar = () => {
+    try {
+      localStorage.setItem(GUARDA, JSON.stringify(estado));
+    } catch {
+      /* modo privado: a posição só não persiste */
+    }
+  };
+  function aplicar() {
+    barra.dataset.lado = estado.lado || 'direita';
+    barra.dataset.altura = estado.altura || 'baixo';
+    barra.dataset.recolhida = estado.recolhida ? '1' : '0';
+    const menu = barra.querySelector('.ce-menu');
+    menu.setAttribute('aria-expanded', String(!estado.recolhida));
+    menu.dataset.dica = estado.recolhida ? 'Abrir editor' : 'Recolher (arraste pra mover)';
+    menu.setAttribute('aria-label', menu.dataset.dica);
+    document.body.dataset.ceLado = barra.dataset.lado;
+  }
+  aplicar();
+  let arrasto = null;
+  const menuBt = barra.querySelector('.ce-menu');
+  menuBt.addEventListener('pointerdown', (e) => {
+    arrasto = { x: e.clientX, y: e.clientY, moveu: false };
+    menuBt.setPointerCapture(e.pointerId);
+  });
+  menuBt.addEventListener('pointermove', (e) => {
+    if (!arrasto) return;
+    if (!arrasto.moveu && Math.hypot(e.clientX - arrasto.x, e.clientY - arrasto.y) < 6) return;
+    arrasto.moveu = true;
+    esconderDica();
+    barra.classList.add('ce-arrastando');
+    barra.style.left = e.clientX - barra.offsetWidth / 2 + 'px';
+    barra.style.top = e.clientY - barra.offsetHeight + 18 + 'px';
+    barra.style.right = barra.style.bottom = 'auto';
+  });
+  menuBt.addEventListener('pointerup', (e) => {
+    const a = arrasto;
+    arrasto = null;
+    if (!a) return;
+    barra.classList.remove('ce-arrastando');
+    barra.style.left = barra.style.top = barra.style.right = barra.style.bottom = '';
+    if (a.moveu) {
+      estado.lado = e.clientX < innerWidth / 2 ? 'esquerda' : 'direita';
+      estado.altura = e.clientY < innerHeight / 2 ? 'cima' : 'baixo';
+    } else {
+      estado.recolhida = !estado.recolhida;
+    }
+    guardar();
+    aplicar();
+  });
+  /* Teclado: Enter/Espaço no menu recolhe, como o clique. */
+  menuBt.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    estado.recolhida = !estado.recolhida;
+    guardar();
+    aplicar();
+  });
 })();
