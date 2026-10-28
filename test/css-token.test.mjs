@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { listarTokens, salvarToken, estiloNaFila } from '../writers/css-token.mjs';
+import { listarTokens, salvarToken, estiloNaFila, PROPS_ESTILO } from '../writers/css-token.mjs';
 
 const FOLHA = `@import "tailwindcss";
 
@@ -224,4 +224,12 @@ describe('estiloNaFila', () => {
     );
     assert.ok(readFileSync(fila, 'utf8').includes(linhaFeita));
   });
+});
+
+test('espaço entre blocos: margin-bottom em px ou token, e nada além', () => {
+  assert.ok(PROPS_ESTILO['margin-bottom'].test('24px'));
+  assert.ok(PROPS_ESTILO['margin-bottom'].test('var(--space-6)'));
+  assert.ok(!PROPS_ESTILO['margin-bottom'].test('24'));
+  assert.ok(!PROPS_ESTILO['margin-bottom'].test('calc(1px + 2px)'));
+  assert.ok(PROPS_ESTILO['margin-top'].test('0px'));
 });

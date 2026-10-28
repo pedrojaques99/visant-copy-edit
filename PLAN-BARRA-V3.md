@@ -44,15 +44,23 @@ com OK do dono: os outros repos usam o pacote via `npx github:`.
 
 Sem o editor no ar, o agente edita o .md direto, no mesmo formato.
 
-## Ficou pra depois
+## Também nesta rodada
 
-- Arrastar pra ajustar espaçamento e ordem (hoje só a largura, pela alça). Grava em token ou regra CSS e
-  precisa decidir, por repo, onde o espaçamento mora: fica pra uma rodada própria.
-- Painéis de chaves e régua ainda no estilo antigo.
+- **Alça de espaço**: passar o mouse num texto mostra, além da alça de largura (direita), uma alça embaixo.
+  Arrastar muda o espaço até o próximo bloco (`margin-bottom`) na grade de 4px, ao vivo; soltar vira
+  pendência e o "aplicar" grava (styles.css, ou pedido na fila num app com Tailwind).
+- Painéis de textos (K) e régua (M) no idioma da v3 (flutuantes, cantos de 14px).
+- **Bug corrigido**: na v2, a função que posiciona a barra também se chamava `aplicar` e tomava o lugar da
+  que grava as alterações pendentes: o botão "aplicar" (largura, cor, fonte) não gravava nada.
+- Pedido de estilo na fila (`estiloNaFila`) reconhece a linha mesmo depois de ganhar número (#n).
+
+## Fora de escopo
+
+- Reordenar blocos arrastando: a ordem mora no HTML/JSX, não em CSS; vira pedido pro agente (C).
 
 ## Prova
 
-- `npm test`: 69 passando (fila v3 e v3.1: thread, estados, ponto, editar, apagar, linha antiga).
+- `npm test`: 70 passando (fila v3 e v3.1: thread, estados, ponto, editar, apagar, linha antiga).
 - E2E no Chrome (Playwright) numa cópia do visantismo: 25 checagens, do clique no ponto ao "feito pelo
   agente", editar, apagar, paleta, sem erro de JS.
 - Barra nova servida por um editor antigo ainda no ar não quebra a página (item sem id/thread é completado).

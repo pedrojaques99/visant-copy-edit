@@ -323,7 +323,7 @@
      pedido: uma linha em docs/COMENTARIOS-IA.md com rota e seletor, que o
      Claude executa depois com o `npm run check` como juiz. */
   const UI =
-    '.ce-barra, .ce-painel, .ce-regua-painel, .ce-recado, .ce-campo, .ce-nota, .ce-fila, .ce-pinos, .ce-paleta, .ce-ajuda';
+    '.ce-barra, .ce-painel, .ce-regua-painel, .ce-recado, .ce-campo, .ce-nota, .ce-fila, .ce-pinos, .ce-paleta, .ce-ajuda, .ce-alca';
 
   /* Seletor curto e estável: para no primeiro id ou data-copy, e usa
      nth-of-type só quando há irmão do mesmo tipo. */
@@ -776,6 +776,89 @@
     pender(...mudancas);
     porAlca(el);
     diz(mudancas.map((m) => `${m.rotulo} → ${m.valor}`).join(' · ') + ' (pendente)');
+  });
+
+  /* ── alça de espaço (barra v3) ───────────────────────────────────────────
+     A mesma ideia da alça de largura, na borda de BAIXO: arrastar pra cima ou pra baixo
+     muda o espaço até o próximo bloco (margin-bottom), na grade de 4px, ao vivo. Soltar
+     vira pendência como a largura, e só o "aplicar" grava (styles.css, ou pedido na fila
+     num app com Tailwind). */
+  const alcaEspaco = document.createElement('div');
+  alcaEspaco.className = 'ce-alca ce-alca-espaco';
+  alcaEspaco.title = 'arraste pra mudar o espaço até o próximo bloco';
+  document.body.append(alcaEspaco);
+  let alvoEspaco = null;
+  let espacando = null;
+
+  function porAlcaEspaco(el) {
+    alvoEspaco = el;
+    const r = el.getBoundingClientRect();
+    const mb = parseFloat(getComputedStyle(el).marginBottom) || 0;
+    alcaEspaco.style.left = r.left + r.width / 2 - 14 + 'px';
+    alcaEspaco.style.top = r.bottom + mb / 2 - 4 + 'px';
+    alcaEspaco.dataset.aberto = '1';
+  }
+  document.addEventListener('mousemove', (e) => {
+    if (!ligado || espacando || arrastando || e.altKey) return;
+    if (e.target === alcaEspaco || e.target === alca) return;
+    const el = e.target.closest && e.target.closest(e.shiftKey ? '[class]' : '.ce-alvo');
+    if (!el || el.closest(UI)) return;
+    if (el !== alvoEspaco) porAlcaEspaco(el);
+  });
+  addEventListener(
+    'scroll',
+    () => {
+      if (espacando) return;
+      alcaEspaco.dataset.aberto = '0';
+      alvoEspaco = null;
+    },
+    { passive: true }
+  );
+  alcaEspaco.addEventListener('pointerdown', (e) => {
+    if (!alvoEspaco) return;
+    e.preventDefault();
+    try {
+      alcaEspaco.setPointerCapture(e.pointerId);
+    } catch {
+      /* evento sintético */
+    }
+    const el = alvoEspaco;
+    espacando = { el, y0: e.clientY, m0: parseFloat(getComputedStyle(el).marginBottom) || 0 };
+  });
+  alcaEspaco.addEventListener('pointermove', (e) => {
+    if (!espacando) return;
+    const { el, y0, m0 } = espacando;
+    const m = Math.max(0, Math.min(400, Math.round((m0 + e.clientY - y0) / 4) * 4));
+    el.style.setProperty('margin-bottom', m + 'px', 'important');
+    espacando.m = m;
+    porAlcaEspaco(el);
+    diz(`${(alvoEstilo(el) || {}).rotulo || '?'} · espaço abaixo ${m}px`);
+  });
+  alcaEspaco.addEventListener('pointerup', () => {
+    if (!espacando) return;
+    const { el, m, m0 } = espacando;
+    espacando = null;
+    el.style.removeProperty('margin-bottom');
+    if (m === undefined || m === Math.round(m0)) return;
+    const alvo = alvoEstilo(el);
+    if (!alvo) {
+      return diz(
+        porChave()
+          ? 'esse elemento não tem chave de copy. Comente (C) e peça pra IA.'
+          : 'esse elemento não tem classe. Comente (C) e peça pra IA.',
+        'erro'
+      );
+    }
+    pender({
+      tipo: 'estilo',
+      chave: 'estilo:' + alvo.rotulo + ':margin-bottom',
+      seletor: alvo.seletor,
+      rotulo: alvo.rotulo,
+      prop: 'margin-bottom',
+      valor: m + 'px',
+    });
+    porAlcaEspaco(el);
+    diz(`${alvo.rotulo} → espaço abaixo ${m}px (pendente)`);
   });
 
   async function enviarNota() {
@@ -1269,7 +1352,9 @@
       /* modo privado: a posição só não persiste */
     }
   };
-  function aplicar() {
+  /* Nome próprio: `aplicar` já é o que grava as alterações pendentes. Com o mesmo nome, esta
+     declaração (que vem depois) tomava o lugar dela e o botão "aplicar" não gravava nada. */
+  function aplicarPosicao() {
     barra.dataset.lado = estado.lado || 'direita';
     barra.dataset.altura = estado.altura || 'baixo';
     barra.dataset.recolhida = estado.recolhida ? '1' : '0';
@@ -1279,7 +1364,7 @@
     menu.setAttribute('aria-label', menu.dataset.dica);
     document.body.dataset.ceLado = barra.dataset.lado;
   }
-  aplicar();
+  aplicarPosicao();
   let arrasto = null;
   const menuBt = barra.querySelector('.ce-menu');
   menuBt.addEventListener('pointerdown', (e) => {
@@ -1309,7 +1394,7 @@
       estado.recolhida = !estado.recolhida;
     }
     guardar();
-    aplicar();
+    aplicarPosicao();
   });
   /* Teclado: Enter/Espaço no menu recolhe, como o clique. */
   menuBt.addEventListener('keydown', (e) => {
@@ -1317,7 +1402,7 @@
     e.preventDefault();
     estado.recolhida = !estado.recolhida;
     guardar();
-    aplicar();
+    aplicarPosicao();
   });
 
   /* ══ barra v3: o ciclo designer ↔ agente (PLAN-BARRA-V3.md) ═══════════════════════════
@@ -1879,6 +1964,7 @@
   for (const [k, v] of [
     ['F', 'comentários (pins numerados, thread, feito)'],
     ['⌘/Ctrl+K', 'buscar texto, chave, comentário ou ação'],
+    ['Arrastar a alça de baixo', 'espaço até o próximo bloco (grade de 4px)'],
   ]) {
     const dt = document.createElement('dt');
     const kbd = document.createElement('kbd');
