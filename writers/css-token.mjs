@@ -165,6 +165,9 @@ export const PROPS_ESTILO = {
   color: /^var\(--[a-z0-9-]+\)$/i,
   'font-family': /^var\(--font-[a-z0-9-]+\)$/i,
   'font-size': /^var\(--[a-z0-9-]+\)$/i,
+  /* Espaço entre blocos (alça de baixo da barra v3): px na grade de 4, ou token de espaço. */
+  'margin-top': /^(\d{1,3}px|var\(--[a-z0-9-]+\))$/i,
+  'margin-bottom': /^(\d{1,3}px|var\(--[a-z0-9-]+\))$/i,
 };
 
 /* .classe, ou [data-copy="chave"] pro texto que não tem classe. */
@@ -257,8 +260,9 @@ export function estiloNaFila(dados, { css, fila, cabecalho = '', chaveExiste, pa
      fica, é histórico. */
   const atual = existsSync(fila) ? readFileSync(fila, 'utf8') : cabecalho;
   const linhas = atual.split(/(?<=\n)/);
-  const i = linhas.findIndex((l) => l.startsWith(cabeca));
-  const antes = i >= 0 ? (linhas[i].slice(cabeca.length).match(/^ (\S+?)[.]? /) || ['', ''])[1] : '';
+  const semNumero = (l) => l.replace(/^- \[ \] #\d+ /, '- [ ] ');
+  const i = linhas.findIndex((l) => semNumero(l).startsWith(cabeca));
+  const antes = i >= 0 ? (semNumero(linhas[i]).slice(cabeca.length).match(/^ (\S+?)[.]? /) || ['', ''])[1] : '';
   if (i >= 0) linhas.splice(i, 1, linha);
   else if (linha) linhas.push((linhas.at(-1)?.endsWith('\n') || !linhas.at(-1) ? '' : '\n') + linha);
   else return { ok: true, arquivo: 'docs/COMENTARIOS-IA.md', antes: '', depois: '' };

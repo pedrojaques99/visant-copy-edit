@@ -21,11 +21,15 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "vendor:lint": "node scripts/vendor-lint.mjs"
+    "vendor:lint": "node scripts/vendor-lint.mjs",
+    "vendor:icones": "node scripts/vendor-icones.mjs"
   },
   "dependencies": {
     "@vercel/stega": "^1.1.0",
     "diff": "^8.0.4",
     "ts-morph": "^28.0.0"
+  },
+  "devDependencies": {
+    "@phosphor-icons/core": "^2.1.1"
   }
 }
