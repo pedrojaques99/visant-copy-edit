@@ -22,7 +22,8 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "vendor:lint": "node scripts/vendor-lint.mjs",
-    "vendor:icones": "node scripts/vendor-icones.mjs"
+    "vendor:icones": "node scripts/vendor-icones.mjs",
+    "vendor:ditado": "node scripts/vendor-ditado.mjs"
   },
   "dependencies": {
     "@vercel/stega": "^1.1.0",

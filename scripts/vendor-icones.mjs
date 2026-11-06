@@ -34,6 +34,7 @@ const ICONES = {
   enviar: 'paper-plane-right',
   apagar: 'trash',
   rabiscar: 'scribble',
+  microfone: 'microphone',
 };
 
 const mapa = Object.fromEntries(

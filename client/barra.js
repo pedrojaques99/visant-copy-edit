@@ -38,7 +38,8 @@
     "reabrir": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z\"/></svg>",
     "enviar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M231.87,114l-168-95.89A16,16,0,0,0,40.92,37.34L71.55,128,40.92,218.67A16,16,0,0,0,56,240a16.15,16.15,0,0,0,7.93-2.1l167.92-96.05a16,16,0,0,0,.05-27.89ZM56,224a.56.56,0,0,0,0-.12L85.74,136H144a8,8,0,0,0,0-16H85.74L56.06,32.16A.46.46,0,0,0,56,32l168,95.83Z\"/></svg>",
     "apagar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/></svg>",
-    "rabiscar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M205.67,189.66a14.61,14.61,0,0,0,0,20.68,8,8,0,0,1-11.32,11.32,30.64,30.64,0,0,1,0-43.32l9.38-9.37A14.63,14.63,0,0,0,183,148.28L116.28,215A30.63,30.63,0,0,1,73,171.72L171.72,73A14.63,14.63,0,0,0,151,52.28L84.28,119A30.63,30.63,0,0,1,41,75.72L82.34,34.34A8,8,0,0,1,93.65,45.66L52.27,87A14.63,14.63,0,0,0,73,107.72L139.72,41A30.63,30.63,0,0,1,183,84.28L84.28,183A14.63,14.63,0,0,0,105,203.72L171.72,137A30.63,30.63,0,0,1,215,180.28Z\"/></svg>"
+    "rabiscar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M205.67,189.66a14.61,14.61,0,0,0,0,20.68,8,8,0,0,1-11.32,11.32,30.64,30.64,0,0,1,0-43.32l9.38-9.37A14.63,14.63,0,0,0,183,148.28L116.28,215A30.63,30.63,0,0,1,73,171.72L171.72,73A14.63,14.63,0,0,0,151,52.28L84.28,119A30.63,30.63,0,0,1,41,75.72L82.34,34.34A8,8,0,0,1,93.65,45.66L52.27,87A14.63,14.63,0,0,0,73,107.72L139.72,41A30.63,30.63,0,0,1,183,84.28L84.28,183A14.63,14.63,0,0,0,105,203.72L171.72,137A30.63,30.63,0,0,1,215,180.28Z\"/></svg>",
+    "microfone": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V240a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z\"/></svg>"
   };
   /* ICONES:FIM */
 
@@ -364,12 +365,16 @@
   nota.innerHTML =
     '<div class="ce-cores"></div>' +
     '<textarea rows="1" placeholder="pedir pra IA…"></textarea>' +
-    '<button class="ce-nota-fechar" aria-label="fechar">×</button>';
+    '<button class="ce-nota-fechar" aria-label="fechar">×</button>' +
+    `<button type="button" class="ce-nota-mic" aria-label="Ditar (Alt+M)" title="Ditar (Alt+M)" aria-keyshortcuts="Alt+M" aria-pressed="false">${ICONES.microfone || ''}</button>`;
   document.body.append(nota);
   const notaTxt = nota.querySelector('textarea');
   const notaCores = nota.querySelector('.ce-cores');
   let alvoNota = null;
+  /* O ditado (microfone) nasce no 1º uso; fechar a nota no meio descarta a gravação. */
+  let ditado = null;
   const fecharNota = () => {
+    if (ditado) ditado.cancelar();
     nota.dataset.aberto = '0';
     alvoNota = null;
     pinoNovo.dataset.aberto = '0';
@@ -873,6 +878,7 @@
     const texto = notaTxt.value.trim();
     const pos = posNota;
     const comRabisco = rabisco.ligado && rabisco.tracos.length > 0;
+    if (ditado) ditado.cancelar();
     nota.dataset.aberto = '0';
     pinoNovo.dataset.aberto = '0';
     alvoNota = null;
@@ -915,6 +921,52 @@
       /* Sem o blur o foco ficava no campo escondido e as teclas (E, C, K) viravam texto. */
       notaTxt.blur();
     }
+  });
+
+  /* ── microfone: ditar o pedido em vez de digitar ──────────────────────────
+     O áudio vai pro Gravador do jaques-os (o mesmo backend do Estúdio) pelo relay
+     /__copy/gravador do servidor, e o texto cai no campo pra revisar antes do Enter.
+     Vale no comentário (C) e no rabisco (R): os dois usam esta nota. O cliente é o
+     ditado.mjs do jaques-os, copiado pelo npm run vendor:ditado. */
+  const micBt = nota.querySelector('.ce-nota-mic');
+  /* O foco fica no campo: Enter continua enviando depois do ditado. */
+  micBt.addEventListener('mousedown', (e) => e.preventDefault());
+  micBt.onclick = () => ditar();
+  async function ditar() {
+    try {
+      if (!ditado) {
+        const { criarDitado } = await import('/__copy/ditado.mjs');
+        ditado ||= criarDitado({
+          base: '/__copy/gravador',
+          onEstado: (estado) => {
+            micBt.dataset.estado = estado;
+            micBt.setAttribute('aria-pressed', estado === 'gravando' ? 'true' : 'false');
+            micBt.disabled = estado === 'mandando';
+            if (estado === 'gravando') diz('gravando… aperte o microfone (ou Alt+M) pra parar');
+            if (estado === 'mandando') diz('transcrevendo…');
+          },
+        });
+      }
+      /* A 2ª chamada só para a gravação; quem escreve o texto é a chamada que começou. */
+      if (ditado.estado === 'gravando' || ditado.estado === 'mandando') return void ditado.alternar();
+      const alvo = alvoNota;
+      const texto = await ditado.alternar();
+      if (nota.dataset.aberto !== '1' || alvoNota !== alvo) return;
+      if (!texto) return diz('não ouvi nada');
+      const antes = notaTxt.value;
+      notaTxt.value = antes + (antes && !/\s$/.test(antes) ? ' ' : '') + texto;
+      notaTxt.focus();
+      notaTxt.setSelectionRange(notaTxt.value.length, notaTxt.value.length);
+      diz('');
+    } catch (e) {
+      diz('ditado: ' + e.message, 'erro');
+    }
+  }
+  /* Alt+M com a nota aberta. e.code e não e.key: no Mac, Alt+M digita "µ". */
+  document.addEventListener('keydown', (e) => {
+    if (!e.altKey || e.ctrlKey || e.metaKey || e.code !== 'KeyM' || nota.dataset.aberto !== '1') return;
+    e.preventDefault();
+    ditar();
   });
 
   /* Com Alt apertado a mira mostra qual elemento vai receber o comentário. */
@@ -2172,6 +2224,7 @@
   /* A lista de atalhos ganha as teclas novas. */
   for (const [k, v] of [
     ['R', 'rabiscar na tela (Enter envia, Esc cancela, ⌘Z tira o último traço)'],
+    ['Alt+M', 'ditar o pedido no microfone (com a nota aberta; aperte de novo pra parar)'],
     ['F', 'comentários (pins numerados, thread, feito)'],
     ['⌘/Ctrl+K', 'buscar texto, chave, comentário ou ação'],
     ['Arrastar a alça de baixo', 'espaço até o próximo bloco (grade de 4px)'],

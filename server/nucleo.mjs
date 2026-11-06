@@ -15,7 +15,8 @@
  * · Não commita. Quem decide o que entra no repo é quem escreve o commit.
  * · Não escuta fora de 127.0.0.1. Ele grava arquivo no teu disco.
  */
-import { createServer } from 'node:http';
+import { createServer, request as pedirHttp } from 'node:http';
+import { request as pedirHttps } from 'node:https';
 import { readFile } from 'node:fs/promises';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -77,7 +78,37 @@ export const ARQUIVOS_CLIENTE = {
   '/__copy/stega.mjs': caminhoStega(),
   '/__copy/freehand.mjs': esmDe('perfect-freehand', '../esm/index.mjs'),
   '/__copy/screenshot.mjs': esmDe('modern-screenshot', 'index.mjs'),
+  /* O cliente do microfone, cópia do jaques-os (npm run vendor:ditado). */
+  '/__copy/ditado.mjs': join(CLIENTE, 'ditado.mjs'),
 };
+
+/* ── relay do Gravador ─────────────────────────────────────────────────────
+   O microfone da nota manda o áudio pro Gravador do jaques-os (jaques-api :3003),
+   que transcreve. O Gravador recusa chamada de browser vindo de outra porta (guarda
+   de Origin), e essa guarda fica: o browser fala com ESTE servidor, e ele repassa
+   sem o Origin, como chamada de servidor. O corpo vai em stream, sem o lerCorpo
+   (que é só pro JSON e tem limite): uma tomada de áudio passa de alguns MB. */
+const HEADERS_GRAVADOR = ['content-type', 'content-length', 'x-duration', 'x-kind', 'accept'];
+export function repassarGravador(req, res, resto) {
+  const base = (process.env.GRAVADOR_URL || 'http://127.0.0.1:3003/api/gravador').replace(/\/+$/, '');
+  const alvo = new URL(base + resto);
+  const headers = {};
+  for (const h of HEADERS_GRAVADOR) if (req.headers[h] !== undefined) headers[h] = req.headers[h];
+  const pedir = alvo.protocol === 'https:' ? pedirHttps : pedirHttp;
+  const sai = pedir(alvo, { method: req.method, headers }, (up) => {
+    res.writeHead(up.statusCode || 502, {
+      'content-type': up.headers['content-type'] || 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+    });
+    up.pipe(res);
+  });
+  sai.on('error', () => {
+    if (!res.headersSent)
+      json(res, 502, { erro: 'Gravador desligado: suba o jaques-api (porta 3003) pelo hub do jaques-os' });
+    else res.destroy();
+  });
+  req.pipe(sai);
+}
 
 /* ── um editor por repo ────────────────────────────────────────────────────
    Dois `copy:edit` de pé no mesmo repo é a receita da escrita cega: cada um
@@ -529,6 +560,10 @@ export function criarServidor(root, adapter) {
       }
       return;
     }
+
+    /* Antes do POST/JSON genérico: o corpo aqui é áudio, e vai em stream. */
+    if (caminho.startsWith('/__copy/gravador/'))
+      return repassarGravador(req, res, url.slice('/__copy/gravador'.length));
 
     const pagina = new URL(url, 'http://x').searchParams.get('pagina') || '/';
 
