@@ -10,14 +10,36 @@
  *   const d = criarDitado({ base: '/__copy/gravador', onEstado });
  *   await d.alternar();   // 1ª vez grava; 2ª para, manda e resolve com o texto
  *
- * estado: 'parado' | 'gravando' | 'mandando' | 'erro'. Erro sai como Error com a
+ * estado: 'parado' | 'gravando' | 'pausado' | 'mandando' | 'erro'. Erro sai como Error com a
  * mensagem em pt-BR, pronta pra mostrar.
+ *
+ * Tempo real: `onPcm(Int16Array)` recebe o áudio cru em 16 kHz mono enquanto grava (e não
+ * enquanto pausa), pra quem quer acompanhar a fala ao vivo (o teleprompter do Estúdio).
  */
 const MIMES = ['audio/webm;codecs=opus', 'audio/webm'];
 
-function gravador(rota, extra, { base = '/api/gravador', onEstado } = {}) {
+/* AudioWorklet que entrega Int16 a 16 kHz (o AudioContext reamostra o microfone). */
+const WORKLET = `registerProcessor('pcm16', class extends AudioWorkletProcessor {
+  process([entrada]) {
+    const c = entrada && entrada[0];
+    if (c) { const o = new Int16Array(c.length); for (let i = 0; i < c.length; i++) o[i] = Math.max(-1, Math.min(1, c[i])) * 32767; this.port.postMessage(o, [o.buffer]); }
+    return true;
+  }
+});`;
+async function ligarPcm(stream, onPcm, ativo) {
+  const ctx = new AudioContext({ sampleRate: 16000 });
+  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' })));
+  const no = new AudioWorkletNode(ctx, 'pcm16');
+  no.port.onmessage = (e) => ativo() && onPcm(e.data);
+  ctx.createMediaStreamSource(stream).connect(no);
+  return () => ctx.close();
+}
+
+function gravador(rota, extra, { base = '/api/gravador', onEstado, onPcm } = {}) {
   let mr = null;
   let t0 = 0;
+  let pausadoEm = 0;
+  let pausas = 0;
   let pronto = null;
   const api = {
     estado: 'parado',
@@ -31,6 +53,19 @@ function gravador(rota, extra, { base = '/api/gravador', onEstado } = {}) {
       if (!mr) return;
       mr.cancelado = true;
       if (mr.state !== 'inactive') mr.stop();
+    },
+    /* Pausa sem cortar a tomada: o tempo pausado não conta na duração. */
+    pausar() {
+      if (!mr || mr.state !== 'recording') return;
+      mr.pause();
+      pausadoEm = Date.now();
+      mudar('pausado');
+    },
+    retomar() {
+      if (!mr || mr.state !== 'paused') return;
+      mr.resume();
+      pausas += Date.now() - pausadoEm;
+      mudar('gravando');
     },
   };
   const mudar = (e) => ((api.estado = e), onEstado && onEstado(e));
@@ -50,10 +85,13 @@ function gravador(rota, extra, { base = '/api/gravador', onEstado } = {}) {
     mr.ondataavailable = (e) => e.data.size && pedacos.push(e.data);
     const parou = new Promise((r) => (mr.onstop = r));
     t0 = Date.now();
+    pausas = 0;
+    const desligarPcm = onPcm ? await ligarPcm(stream, onPcm, () => mr && mr.state === 'recording').catch(() => null) : null;
     mr.start();
     mudar('gravando');
     await parou;
-    const dur = Date.now() - t0;
+    if (desligarPcm) desligarPcm();
+    const dur = Date.now() - t0 - pausas - (api.estado === 'pausado' ? Date.now() - pausadoEm : 0);
     const cancelado = mr.cancelado;
     stream.getTracks().forEach((t) => t.stop());
     mr = null;
