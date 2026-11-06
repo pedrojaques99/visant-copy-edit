@@ -168,6 +168,7 @@ writers/objeto.mjs       lê/troca/insere chave em objeto TS ou JSON sem reescre
 server/marcar.mjs        marcarMensagens/marcarLocales + o trecho que o `ligar` escreve no repo
 writers/css-token.mjs    token na folha + estilo (na folha ou na fila)
 lint/copy-lint.mjs       o lint padrão (vendor da skill)
+client/ditado.mjs        o cliente do microfone (vendor do jaques-os, servido em /__copy/ditado.mjs)
 migrar/                  `copy-edit migrar`: codemod (ts-morph), infra do next-intl, portões
 migrar/idioma.mjs        o texto do JSX está em en? (heurística, só com folga)
 ```
@@ -183,3 +184,38 @@ Pin claro = aguardando o agente, laranja = o agente leu, cinza = feito; ponto ve
 O agente, com o editor no ar: `GET /__copy/comentarios?todas=1&agente=1` (marca como lido),
 `POST /__copy/comentario/responder {id, autor: "ia", texto}` e
 `POST /__copy/comentario/status {id, estado: "feito", autor: "ia", texto}`. Detalhes em PLAN-BARRA-V3.md.
+
+## Só comentário, em cima de qualquer app (`so-comentario`)
+
+Pra painel interno ou app sem i18n (texto no JSX), onde o que se quer é o ciclo designer ↔
+agente e não editar texto. O servidor fica na frente do app como proxy, injeta a barra no HTML e
+repassa o websocket do HMR; o app não ganha nada. Sem o app de pé, `app` sobe ele.
+
+```js
+export default { adapter: 'so-comentario', opcoes: { alvo: 'http://127.0.0.1:4317', porta: 4318, app: 'npm run dev' } };
+```
+
+A barra nasce sem editar (E), textos (K) e desfazer; texto, token e estilo respondem 409.
+
+## Rabisco (R)
+
+**R** liga a caneta (perfect-freehand): arraste na tela, solte e escreva o pedido; dá pra seguir
+rabiscando com a nota aberta, **⌘/Ctrl+Z** tira o último traço, **Esc** cancela. Enter envia um
+comentário com pin, igual aos outros, e a foto da tela com o rabisco (modern-screenshot) em
+`docs/comentarios/<n>.png`, que a linha da fila referencia (`![rabisco](comentarios/n.png)`) e o
+agente abre. Funciona em todo adapter.
+
+## Ditado (microfone)
+
+Com a nota aberta (comentário **C** ou rabisco **R**), o microfone dentro dela ou **Alt+M** grava;
+aperte de novo pra parar. O texto cai no campo e você revisa antes do Enter.
+
+Quem transcreve é o Gravador do jaques-os (jaques-api, porta 3003), o mesmo backend do Estúdio.
+O browser não fala com ele direto (a guarda de Origin do Gravador recusa e continua recusando):
+fala com `/__copy/gravador/*`, e o servidor do editor repassa sem o Origin pra
+`$GRAVADOR_URL` (padrão `http://127.0.0.1:3003/api/gravador`). Com o jaques-api desligado, a
+barra diz "Gravador desligado"; suba ele pelo hub do jaques-os.
+
+O cliente é um só, `jaques-os/frontend/public/gravador/ditado.mjs`. Este pacote leva uma cópia
+em `client/ditado.mjs`: `npm run vendor:ditado` atualiza (fonte: `$JAQUES_OS` ou `../jaques-os`).
+Não edite a cópia.

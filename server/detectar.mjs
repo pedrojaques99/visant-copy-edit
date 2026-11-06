@@ -484,7 +484,9 @@ export const MIGRAR =
   'Não reconheci onde mora a copy deste repo (nem next-intl, nem HTML com data-copy + copy*.json).\n' +
   '    Num app Next, `copy-edit migrar --dry` mostra a migração do texto do JSX pra next-intl\n' +
   '    + copy/<rota>.json, e `copy-edit migrar` faz. Fora disso, escreva um\n' +
-  '    copy-edit.config.mjs à mão (ver o README do pacote).';
+  '    copy-edit.config.mjs à mão (ver o README do pacote).\n' +
+  '    Só quer comentar e rabiscar em cima do app (sem editar texto)? Use\n' +
+  "    export default { adapter: 'so-comentario', opcoes: { alvo: 'http://127.0.0.1:<porta do app>' } }";
 
 export function detectar(root) {
   const pkg = lerJson(join(root, 'package.json')) || {};

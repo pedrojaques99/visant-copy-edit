@@ -15,7 +15,8 @@
  * · Não commita. Quem decide o que entra no repo é quem escreve o commit.
  * · Não escuta fora de 127.0.0.1. Ele grava arquivo no teu disco.
  */
-import { createServer } from 'node:http';
+import { createServer, request as pedirHttp } from 'node:http';
+import { request as pedirHttps } from 'node:https';
 import { readFile } from 'node:fs/promises';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -58,12 +59,56 @@ function caminhoStega() {
 /* As URLs da barra continuam `/__copy/editor.js|css`, que é o que o HTML
    injetado no visantismo e a ponte do Club sempre pediram. O arquivo mudou de
    nome (client/barra.js), o contrato com a página não. */
+/* As duas libs do rabisco (R) vão pro browser como ESM, do node_modules DESTE pacote, como
+   o stega: perfect-freehand desenha o traço, modern-screenshot tira a foto da tela. A barra
+   só importa as duas quando o rabisco é usado pela primeira vez. */
+function esmDe(pacote, rel) {
+  try {
+    const req = createRequire(import.meta.url);
+    return join(dirname(req.resolve(pacote)), rel);
+  } catch {
+    return null;
+  }
+}
+
 export const ARQUIVOS_CLIENTE = {
   '/__copy/editor.js': join(CLIENTE, 'barra.js'),
   '/__copy/editor.css': join(CLIENTE, 'barra.css'),
   '/__copy/ponte-stega.js': join(CLIENTE, 'ponte-stega.js'),
   '/__copy/stega.mjs': caminhoStega(),
+  '/__copy/freehand.mjs': esmDe('perfect-freehand', '../esm/index.mjs'),
+  '/__copy/screenshot.mjs': esmDe('modern-screenshot', 'index.mjs'),
+  /* O cliente do microfone, cópia do jaques-os (npm run vendor:ditado). */
+  '/__copy/ditado.mjs': join(CLIENTE, 'ditado.mjs'),
 };
+
+/* ── relay do Gravador ─────────────────────────────────────────────────────
+   O microfone da nota manda o áudio pro Gravador do jaques-os (jaques-api :3003),
+   que transcreve. O Gravador recusa chamada de browser vindo de outra porta (guarda
+   de Origin), e essa guarda fica: o browser fala com ESTE servidor, e ele repassa
+   sem o Origin, como chamada de servidor. O corpo vai em stream, sem o lerCorpo
+   (que é só pro JSON e tem limite): uma tomada de áudio passa de alguns MB. */
+const HEADERS_GRAVADOR = ['content-type', 'content-length', 'x-duration', 'x-kind', 'accept'];
+export function repassarGravador(req, res, resto) {
+  const base = (process.env.GRAVADOR_URL || 'http://127.0.0.1:3003/api/gravador').replace(/\/+$/, '');
+  const alvo = new URL(base + resto);
+  const headers = {};
+  for (const h of HEADERS_GRAVADOR) if (req.headers[h] !== undefined) headers[h] = req.headers[h];
+  const pedir = alvo.protocol === 'https:' ? pedirHttps : pedirHttp;
+  const sai = pedir(alvo, { method: req.method, headers }, (up) => {
+    res.writeHead(up.statusCode || 502, {
+      'content-type': up.headers['content-type'] || 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+    });
+    up.pipe(res);
+  });
+  sai.on('error', () => {
+    if (!res.headersSent)
+      json(res, 502, { erro: 'Gravador desligado: suba o jaques-api (porta 3003) pelo hub do jaques-os' });
+    else res.destroy();
+  });
+  req.pipe(sai);
+}
 
 /* ── um editor por repo ────────────────────────────────────────────────────
    Dois `copy:edit` de pé no mesmo repo é a receita da escrita cega: cada um
@@ -122,9 +167,15 @@ export function trancar(root, { pasta, pid = process.pid } = {}) {
    as duas viram U+FFFD. O defeito é intermitente por natureza (depende do
    tamanho do texto e do MTU), e o estrago é silencioso: o acento sai da
    copy, o build passa, e o site publica "voc?" numa headline. */
-export async function lerCorpo(req) {
+/* 12 MB: o maior corpo legítimo é o PNG do rabisco em base64. */
+export async function lerCorpo(req, limite = 12 * 1024 * 1024) {
   const pedacos = [];
-  for await (const c of req) pedacos.push(c);
+  let n = 0;
+  for await (const c of req) {
+    n += c.length;
+    if (n > limite) throw new Error('corpo grande demais');
+    pedacos.push(c);
+  }
   return JSON.parse(Buffer.concat(pedacos).toString('utf8'));
 }
 
@@ -246,6 +297,26 @@ POST /__copy/comentario/status {id, estado: "lido"|"feito"|"aberto", autor: "ia"
    Formato v3: cada comentário tem número (`#7`) e thread. Linha antiga, sem
    número, ganha o número da posição na leitura e é reescrita com ele na
    primeira mudança, então fila velha continua valendo. */
+/* O rabisco fica no fim do texto como imagem markdown (`![rabisco](comentarios/7.png)`):
+   quem lê a fila no editor ou no GitHub vê a imagem, e a linha continua no formato v3. */
+const RABISCO = /\s*!\[rabisco\]\((comentarios\/[\w.-]+\.png)\)\s*$/;
+export function separarRabisco(texto) {
+  const m = String(texto).match(RABISCO);
+  return m ? { texto: texto.replace(RABISCO, ''), rabisco: 'docs/' + m[1] } : { texto };
+}
+
+/* data:image/png;base64 → Buffer, só se for PNG de verdade e até 8 MB. */
+const PNG_MAGICA = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+export function pngDe(url) {
+  if (!url) return null;
+  const m = String(url).match(/^data:image\/png;base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) return { erro: 'rabisco não é um PNG' };
+  const buf = Buffer.from(m[1], 'base64');
+  if (!buf.subarray(0, 8).equals(PNG_MAGICA)) return { erro: 'rabisco não é um PNG' };
+  if (buf.length > 8 * 1024 * 1024) return { erro: 'rabisco grande demais (8 MB)' };
+  return buf;
+}
+
 export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
   const arquivo = join(root, 'docs', 'COMENTARIOS-IA.md');
 
@@ -275,7 +346,7 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
           seletor: m[4],
           pos: m[5] ? { x: Number(m[5]), y: Number(m[6]) } : null,
           trecho: m[7] || '',
-          texto: m[8],
+          ...separarRabisco(m[8]),
           respostas: [],
         });
         continue;
@@ -296,7 +367,9 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
           `- [${MARCA[c.estado] || ' '}] #${c.id} \`${c.pagina}\` \`${c.seletor}\`` +
           (c.pos ? ` @${c.pos.x},${c.pos.y}` : '') +
           (c.trecho ? ` · "${c.trecho}"` : '') +
-          ` · ${c.texto}\n` +
+          ` · ${c.texto}` +
+          (c.rabisco ? ` ![rabisco](${c.rabisco.replace(/^docs\//, '')})` : '') +
+          '\n' +
           c.respostas.map((r) => `  - ${r.autor}: ${r.texto}\n`).join('')
       )
       .join('');
@@ -330,11 +403,19 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
   }
 
   function comentar(dados) {
-    const texto = umaLinha(dados.texto, 2000);
+    const png = pngDe(dados.png);
+    if (png && png.erro) return png;
+    const texto = umaLinha(dados.texto, 2000) || (png ? '(rabisco, sem texto)' : '');
     const seletor = umaLinha(dados.seletor, 300);
     if (!texto || !seletor) return { erro: 'comentário vazio' };
     const fila = parse();
     const id = fila.itens.reduce((n, c) => Math.max(n, c.id), 0) + 1;
+    let rabisco = '';
+    if (png) {
+      rabisco = `docs/comentarios/${id}.png`;
+      mkdirSync(join(root, 'docs', 'comentarios'), { recursive: true });
+      writeFileSync(join(root, rabisco), png);
+    }
     const comentario = {
       id,
       estado: 'aberto',
@@ -344,6 +425,7 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
       pos: posDe(dados.pos),
       trecho: umaLinha(dados.trecho, 80).replace(/"/g, "'"),
       texto,
+      ...(rabisco ? { rabisco } : {}),
       respostas: [],
     };
     fila.itens.push(comentario);
@@ -384,6 +466,7 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
     if (!c) return { erro: `comentário #${dados.id} não existe` };
     fila.itens = fila.itens.filter((x) => x !== c);
     escrever(fila);
+    if (c.rabisco && existsSync(join(root, c.rabisco))) unlinkSync(join(root, c.rabisco));
     return { ok: true, id: c.id };
   }
 
@@ -401,7 +484,14 @@ export function filaComentarios(root, { dica = '', limpar = (t) => t } = {}) {
     return { ok: true, comentario: c };
   }
 
-  return { ler, comentar, responder, editar, apagar, status, arquivo };
+  /* O PNG de um rabisco, pro <img> da fila e do pin. */
+  function rabiscoDe(id) {
+    const c = parse().itens.find((x) => x.id === Number(id));
+    const f = c && c.rabisco && join(root, c.rabisco);
+    return f && existsSync(f) ? readFileSync(f) : null;
+  }
+
+  return { ler, comentar, responder, editar, apagar, status, rabiscoDe, arquivo };
 }
 
 /* O `next dev` do repo, com as flags do editor. `COPY_EDIT=1` liga o stega no
@@ -442,7 +532,7 @@ export function criarServidor(root, adapter) {
     limpar: adapter.limpar,
   });
 
-  return createServer(async (req, res) => {
+  const server = createServer(async (req, res) => {
     const url = req.url || '/';
     const caminho = url.split('?')[0];
 
@@ -458,7 +548,11 @@ export function criarServidor(root, adapter) {
       const f = ARQUIVOS_CLIENTE[caminho];
       try {
         if (!f) throw new Error('ausente');
-        const corpo = await readFile(f);
+        let corpo = await readFile(f);
+        /* O modo vai junto da barra, na 1ª linha: ela monta síncrona e já nasce sem os
+           botões que o adapter não atende (só comentário: sem editar, textos, desfazer). */
+        if (caminho === '/__copy/editor.js' && adapter.modo)
+          corpo = `window.__copyEditModo = ${JSON.stringify(adapter.modo)};\n` + corpo;
         res.writeHead(200, { 'content-type': MIME[extname(f)], 'cache-control': 'no-store' });
         res.end(corpo);
       } catch {
@@ -466,6 +560,10 @@ export function criarServidor(root, adapter) {
       }
       return;
     }
+
+    /* Antes do POST/JSON genérico: o corpo aqui é áudio, e vai em stream. */
+    if (caminho.startsWith('/__copy/gravador/'))
+      return repassarGravador(req, res, url.slice('/__copy/gravador'.length));
 
     const pagina = new URL(url, 'http://x').searchParams.get('pagina') || '/';
 
@@ -483,6 +581,12 @@ export function criarServidor(root, adapter) {
       const itens = fila.ler({ agente: q.get('agente') === '1' });
       return json(res, 200, { itens: todas ? itens : itens.filter((c) => c.pagina === pagina) });
     }
+    if (caminho === '/__copy/rabisco') {
+      const png = fila.rabiscoDe(new URL(url, 'http://x').searchParams.get('id'));
+      if (!png) return res.writeHead(404).end('sem rabisco');
+      res.writeHead(200, { 'content-type': MIME['.png'], 'cache-control': 'no-store' });
+      return res.end(png);
+    }
     if (caminho === '/__copy/tokens') {
       return json(res, 200, { tokens: adapter.tokens() });
     }
@@ -494,8 +598,9 @@ export function criarServidor(root, adapter) {
     let dados;
     try {
       dados = await lerCorpo(req);
-    } catch {
-      return json(res, 400, { erro: 'json inválido' });
+    } catch (e) {
+      const grande = e.message === 'corpo grande demais';
+      return json(res, grande ? 413 : 400, { erro: grande ? e.message : 'json inválido' });
     }
 
     if (caminho === '/__copy/comentar') {
@@ -542,4 +647,7 @@ export function criarServidor(root, adapter) {
     }
     res.writeHead(404).end('não existe');
   });
+  /* Websocket do app (HMR do Vite/Next) atrás do proxy do so-comentario. */
+  if (adapter.aoUpgrade) server.on('upgrade', adapter.aoUpgrade);
+  return server;
 }

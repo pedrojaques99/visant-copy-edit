@@ -37,7 +37,9 @@
     "check": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z\"/></svg>",
     "reabrir": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z\"/></svg>",
     "enviar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M231.87,114l-168-95.89A16,16,0,0,0,40.92,37.34L71.55,128,40.92,218.67A16,16,0,0,0,56,240a16.15,16.15,0,0,0,7.93-2.1l167.92-96.05a16,16,0,0,0,.05-27.89ZM56,224a.56.56,0,0,0,0-.12L85.74,136H144a8,8,0,0,0,0-16H85.74L56.06,32.16A.46.46,0,0,0,56,32l168,95.83Z\"/></svg>",
-    "apagar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/></svg>"
+    "apagar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/></svg>",
+    "rabiscar": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M205.67,189.66a14.61,14.61,0,0,0,0,20.68,8,8,0,0,1-11.32,11.32,30.64,30.64,0,0,1,0-43.32l9.38-9.37A14.63,14.63,0,0,0,183,148.28L116.28,215A30.63,30.63,0,0,1,73,171.72L171.72,73A14.63,14.63,0,0,0,151,52.28L84.28,119A30.63,30.63,0,0,1,41,75.72L82.34,34.34A8,8,0,0,1,93.65,45.66L52.27,87A14.63,14.63,0,0,0,73,107.72L139.72,41A30.63,30.63,0,0,1,183,84.28L84.28,183A14.63,14.63,0,0,0,105,203.72L171.72,137A30.63,30.63,0,0,1,215,180.28Z\"/></svg>",
+    "microfone": "<svg aria-hidden=\"true\" focusable=\"false\" width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V240a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z\"/></svg>"
   };
   /* ICONES:FIM */
 
@@ -76,6 +78,12 @@
     '<div class="ce-lista"></div>';
 
   document.body.append(barra, recado, painel, dica);
+
+  /* Modo só comentário (adapter so-comentario): o servidor não grava texto, então a barra
+     nasce sem editar (E), textos (K) e desfazer. Ficam comentar, rabiscar, fila, celular. */
+  const SO_COMENTARIO = window.__copyEditModo === 'comentario';
+  const SEM_TEXTO = ['.ce-toggle', '.ce-chaves', '.ce-desfazer'];
+  if (SO_COMENTARIO) for (const s of SEM_TEXTO) barra.querySelector(s).hidden = true;
 
   const nEl = barra.querySelector('.ce-n');
   let ligado = true;
@@ -323,7 +331,7 @@
      pedido: uma linha em docs/COMENTARIOS-IA.md com rota e seletor, que o
      Claude executa depois com o `npm run check` como juiz. */
   const UI =
-    '.ce-barra, .ce-painel, .ce-regua-painel, .ce-recado, .ce-campo, .ce-nota, .ce-fila, .ce-pinos, .ce-paleta, .ce-ajuda, .ce-alca';
+    '.ce-barra, .ce-painel, .ce-regua-painel, .ce-recado, .ce-campo, .ce-nota, .ce-fila, .ce-pinos, .ce-paleta, .ce-ajuda, .ce-alca, .ce-tela, .ce-previa';
 
   /* Seletor curto e estável: para no primeiro id ou data-copy, e usa
      nth-of-type só quando há irmão do mesmo tipo. */
@@ -357,12 +365,16 @@
   nota.innerHTML =
     '<div class="ce-cores"></div>' +
     '<textarea rows="1" placeholder="pedir pra IA…"></textarea>' +
-    '<button class="ce-nota-fechar" aria-label="fechar">×</button>';
+    '<button class="ce-nota-fechar" aria-label="fechar">×</button>' +
+    `<button type="button" class="ce-nota-mic" aria-label="Ditar (Alt+M)" title="Ditar (Alt+M)" aria-keyshortcuts="Alt+M" aria-pressed="false">${ICONES.microfone || ''}</button>`;
   document.body.append(nota);
   const notaTxt = nota.querySelector('textarea');
   const notaCores = nota.querySelector('.ce-cores');
   let alvoNota = null;
+  /* O ditado (microfone) nasce no 1º uso; fechar a nota no meio descarta a gravação. */
+  let ditado = null;
   const fecharNota = () => {
+    if (ditado) ditado.cancelar();
     nota.dataset.aberto = '0';
     alvoNota = null;
     pinoNovo.dataset.aberto = '0';
@@ -865,11 +877,19 @@
     const el = alvoNota;
     const texto = notaTxt.value.trim();
     const pos = posNota;
+    const comRabisco = rabisco.ligado && rabisco.tracos.length > 0;
+    if (ditado) ditado.cancelar();
     nota.dataset.aberto = '0';
     pinoNovo.dataset.aberto = '0';
     alvoNota = null;
     notaTxt.blur();
-    if (!el || !texto) return;
+    if (!el || (!texto && !comRabisco)) return;
+    let png = '';
+    if (comRabisco) {
+      diz('tirando a foto da tela…');
+      png = await fotoRabisco();
+      modoRabisco(false);
+    }
     const r = await fetch('/__copy/comentar', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -879,6 +899,7 @@
         trecho: (el.innerText || el.getAttribute('alt') || '').trim(),
         texto,
         pos,
+        png,
       }),
     })
       .then((x) => x.json())
@@ -896,9 +917,56 @@
     }
     if (e.key === 'Escape') {
       fecharNota();
+      if (rabisco.ligado) modoRabisco(false);
       /* Sem o blur o foco ficava no campo escondido e as teclas (E, C, K) viravam texto. */
       notaTxt.blur();
     }
+  });
+
+  /* ── microfone: ditar o pedido em vez de digitar ──────────────────────────
+     O áudio vai pro Gravador do jaques-os (o mesmo backend do Estúdio) pelo relay
+     /__copy/gravador do servidor, e o texto cai no campo pra revisar antes do Enter.
+     Vale no comentário (C) e no rabisco (R): os dois usam esta nota. O cliente é o
+     ditado.mjs do jaques-os, copiado pelo npm run vendor:ditado. */
+  const micBt = nota.querySelector('.ce-nota-mic');
+  /* O foco fica no campo: Enter continua enviando depois do ditado. */
+  micBt.addEventListener('mousedown', (e) => e.preventDefault());
+  micBt.onclick = () => ditar();
+  async function ditar() {
+    try {
+      if (!ditado) {
+        const { criarDitado } = await import('/__copy/ditado.mjs');
+        ditado ||= criarDitado({
+          base: '/__copy/gravador',
+          onEstado: (estado) => {
+            micBt.dataset.estado = estado;
+            micBt.setAttribute('aria-pressed', estado === 'gravando' ? 'true' : 'false');
+            micBt.disabled = estado === 'mandando';
+            if (estado === 'gravando') diz('gravando… aperte o microfone (ou Alt+M) pra parar');
+            if (estado === 'mandando') diz('transcrevendo…');
+          },
+        });
+      }
+      /* A 2ª chamada só para a gravação; quem escreve o texto é a chamada que começou. */
+      if (ditado.estado === 'gravando' || ditado.estado === 'mandando') return void ditado.alternar();
+      const alvo = alvoNota;
+      const texto = await ditado.alternar();
+      if (nota.dataset.aberto !== '1' || alvoNota !== alvo) return;
+      if (!texto) return diz('não ouvi nada');
+      const antes = notaTxt.value;
+      notaTxt.value = antes + (antes && !/\s$/.test(antes) ? ' ' : '') + texto;
+      notaTxt.focus();
+      notaTxt.setSelectionRange(notaTxt.value.length, notaTxt.value.length);
+      diz('');
+    } catch (e) {
+      diz('ditado: ' + e.message, 'erro');
+    }
+  }
+  /* Alt+M com a nota aberta. e.code e não e.key: no Mac, Alt+M digita "µ". */
+  document.addEventListener('keydown', (e) => {
+    if (!e.altKey || e.ctrlKey || e.metaKey || e.code !== 'KeyM' || nota.dataset.aberto !== '1') return;
+    e.preventDefault();
+    ditar();
   });
 
   /* Com Alt apertado a mira mostra qual elemento vai receber o comentário. */
@@ -1075,7 +1143,7 @@
      em edição o E é só uma letra, por isso a guarda. */
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'e' && e.key !== 'E') return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (SO_COMENTARIO || e.ctrlKey || e.metaKey || e.altKey) return;
     const a = document.activeElement;
     if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
     e.preventDefault();
@@ -1294,6 +1362,11 @@
     ['⌘/Ctrl+clique', 'clicar como no site'],
     ['?', 'esta lista'],
   ];
+  if (SO_COMENTARIO) {
+    const DE_TEXTO = ['Clique no texto', 'Enter', 'E', 'K', '⌘/Ctrl+Z'];
+    for (let i = ATALHOS.length - 1; i >= 0; i--) if (DE_TEXTO.includes(ATALHOS[i][0])) ATALHOS.splice(i, 1);
+    ATALHOS[0] = ['Esc', 'fechar'];
+  }
   ajuda.innerHTML =
     '<header><b>Atalhos</b><button type="button" class="ce-ajuda-fechar" aria-label="fechar">' +
     (ICONES.fechar || '×') +
@@ -1329,9 +1402,10 @@
     }
     if (e.ctrlKey || e.metaKey || e.altKey || emCampo()) return;
     const acao = TECLAS[e.key === '?' ? '?' : e.key.toLowerCase()];
-    if (!acao) return;
+    const bt = acao && barra.querySelector(acao);
+    if (!bt || bt.hidden) return;
     e.preventDefault();
-    barra.querySelector(acao).click();
+    bt.click();
   });
 
   /* ── recolher e arrastar ────────────────────────────────────────────────
@@ -1518,6 +1592,7 @@
     const t = document.createElement('p');
     t.textContent = c.texto;
     previa.append(est, t);
+    if (c.rabisco) previa.append(miniRabisco(c));
     const ultima = c.respostas[c.respostas.length - 1];
     if (ultima) {
       const u = document.createElement('p');
@@ -1716,6 +1791,7 @@
       diz(`#${c.id} apagado`);
     };
     msgs.append(pedido);
+    if (c.rabisco) msgs.append(miniRabisco(c));
     for (const r of c.respostas) msgs.append(msg(r.autor, r.texto));
 
     const form = document.createElement('form');
@@ -1818,8 +1894,9 @@
     ['Textos sem cara (alt, title, og)', 'K', '.ce-chaves'],
     ['Ver no celular', 'M', '.ce-regua'],
     ['Desfazer o último save', '⌘Z', '.ce-desfazer'],
+    ['Rabiscar na tela', 'R', '.ce-rabiscar'],
     ['Atalhos', '?', '.ce-atalhos'],
-  ];
+  ].filter(([, , sel]) => !SO_COMENTARIO || !SEM_TEXTO.includes(sel));
 
   const norm = (t) =>
     String(t || '')
@@ -1960,8 +2037,194 @@
     true
   );
 
+  /* ══ rabisco (R) ══════════════════════════════════════════════════════════════════════
+     Uma camada por cima da página recebe o traço (perfect-freehand, o mesmo do tldraw).
+     Soltou o traço, abre a nota no meio do rabisco: dá pra seguir rabiscando antes de
+     escrever. Enter envia a foto da tela COM o rabisco (modern-screenshot), que vira um
+     comentário com pin, igual aos outros, e um PNG em docs/comentarios/<n>.png pro agente.
+     As duas libs só carregam no primeiro R. */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const COR_RABISCO = '#ff9a3c';
+  const TRACO = { size: 7, thinning: 0.55, smoothing: 0.5, streamline: 0.45, simulatePressure: true };
+  const rabisco = { ligado: false, tracos: [], atual: null, lib: null };
+  const tela = document.createElementNS(SVGNS, 'svg');
+  tela.setAttribute('class', 'ce-tela');
+  tela.setAttribute('aria-hidden', 'true');
+  document.body.append(tela);
+
+  async function libsRabisco() {
+    if (!rabisco.lib) {
+      const [f, s] = await Promise.all([import('/__copy/freehand.mjs'), import('/__copy/screenshot.mjs')]);
+      rabisco.lib = { getStroke: f.getStroke || f.default, domToCanvas: s.domToCanvas };
+    }
+    return rabisco.lib;
+  }
+
+  /* Contorno do perfect-freehand → path SVG (a função do README da lib). */
+  const media = (a, b) => (a + b) / 2;
+  function pathDe(pts) {
+    const c = rabisco.lib.getStroke(pts, TRACO);
+    if (c.length < 4) return '';
+    let a = c[0];
+    let b = c[1];
+    let d = `M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${b[0].toFixed(1)},${b[1].toFixed(1)} ${media(b[0], c[2][0]).toFixed(1)},${media(b[1], c[2][1]).toFixed(1)} T`;
+    for (let i = 2; i < c.length - 1; i++) {
+      a = c[i];
+      b = c[i + 1];
+      d += `${media(a[0], b[0]).toFixed(1)},${media(a[1], b[1]).toFixed(1)} `;
+    }
+    return d + 'Z';
+  }
+
+  function limparTela() {
+    rabisco.tracos = [];
+    rabisco.atual = null;
+    tela.replaceChildren();
+  }
+
+  function modoRabisco(liga) {
+    rabisco.ligado = liga === undefined ? !rabisco.ligado : liga;
+    rabiscarBt.setAttribute('aria-pressed', String(rabisco.ligado));
+    document.body.classList.toggle('ce-rabiscando', rabisco.ligado);
+    if (rabisco.ligado) {
+      if (comentando) modoComentar(false);
+      libsRabisco().catch((e) => diz('rabisco não carregou: ' + e.message, 'erro'));
+      diz('arraste pra rabiscar · Enter envia · Esc cancela · ⌘Z tira o último traço');
+    } else {
+      limparTela();
+    }
+  }
+
+  /* O elemento debaixo do meio do rabisco: é nele que o pin fica. */
+  function alvoDoRabisco() {
+    const xs = rabisco.tracos.flatMap((t) => t.pts.map((p) => p[0]));
+    const ys = rabisco.tracos.flatMap((t) => t.pts.map((p) => p[1]));
+    const x = media(Math.min(...xs), Math.max(...xs));
+    const y = media(Math.min(...ys), Math.max(...ys));
+    const el = document.elementsFromPoint(x, y).find((n) => !n.closest(UI)) || document.body;
+    return { el, x, y };
+  }
+
+  tela.addEventListener('pointerdown', (e) => {
+    if (!rabisco.ligado || !rabisco.lib || e.button !== 0) return;
+    e.preventDefault();
+    tela.setPointerCapture(e.pointerId);
+    const path = document.createElementNS(SVGNS, 'path');
+    path.setAttribute('fill', COR_RABISCO);
+    tela.append(path);
+    rabisco.atual = { pts: [[e.clientX, e.clientY, e.pressure || 0.5]], path };
+  });
+  tela.addEventListener('pointermove', (e) => {
+    const t = rabisco.atual;
+    if (!t) return;
+    for (const ev of e.getCoalescedEvents ? e.getCoalescedEvents() : [e])
+      t.pts.push([ev.clientX, ev.clientY, ev.pressure || 0.5]);
+    t.path.setAttribute('d', pathDe(t.pts));
+  });
+  const soltarTraco = () => {
+    const t = rabisco.atual;
+    rabisco.atual = null;
+    if (!t) return;
+    if (t.pts.length < 2) t.pts.push([t.pts[0][0] + 0.5, t.pts[0][1] + 0.5, 0.5]);
+    t.path.setAttribute('d', pathDe(t.pts));
+    rabisco.tracos.push(t);
+    const { el, x, y } = alvoDoRabisco();
+    if (nota.dataset.aberto === '1') {
+      /* Nota já aberta: só troca o alvo, sem apagar o que foi escrito. */
+      const texto = notaTxt.value;
+      abrirNota(el, x, y);
+      notaTxt.value = texto;
+    } else abrirNota(el, x, y);
+    notaTxt.placeholder = 'O que é esse rabisco? (Enter envia, pode seguir rabiscando)';
+  };
+  tela.addEventListener('pointerup', soltarTraco);
+  tela.addEventListener('pointercancel', soltarTraco);
+
+  /* A foto: a página sem a casca do editor, cortada no que está na tela, com os traços
+     pintados por cima. Se a captura falhar (raro: canvas sujo, fonte de outro domínio),
+     vai só o rabisco sobre fundo escuro, e o seletor e o ponto continuam no comentário. */
+  async function fotoRabisco() {
+    const lib = await libsRabisco();
+    const W = innerWidth;
+    const H = innerHeight;
+    const cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = getComputedStyle(document.body).backgroundColor || '#0b0b0c';
+    ctx.fillRect(0, 0, W, H);
+    try {
+      const raiz = document.documentElement;
+      const base = await lib.domToCanvas(raiz, {
+        scale: 1,
+        filter: (n) => !(n.nodeType === 1 && n.matches(UI)),
+      });
+      const k = base.width / Math.max(raiz.scrollWidth, W);
+      ctx.drawImage(base, scrollX * k, scrollY * k, W * k, H * k, 0, 0, W, H);
+    } catch (e) {
+      diz('foto da tela falhou, vai só o rabisco: ' + e.message, 'erro');
+    }
+    ctx.fillStyle = COR_RABISCO;
+    for (const t of rabisco.tracos) ctx.fill(new Path2D(pathDe(t.pts)));
+    return cv.toDataURL('image/png');
+  }
+
+  function miniRabisco(c) {
+    const a = document.createElement('a');
+    a.className = 'ce-rabisco-mini';
+    a.href = '/__copy/rabisco?id=' + c.id;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    const img = document.createElement('img');
+    img.src = a.href;
+    img.alt = `rabisco do comentário ${c.id}`;
+    img.loading = 'lazy';
+    a.append(img);
+    return a;
+  }
+
+  grupo.querySelector('.ce-comentar').insertAdjacentHTML(
+    'afterend',
+    botao('ce-rabiscar', 'rabiscar', 'Rabiscar', 'R', 'aria-pressed="false"')
+  );
+  const rabiscarBt = grupo.querySelector('.ce-rabiscar');
+  rabiscarBt.onclick = () => modoRabisco();
+
+  /* R liga/desliga; com o rabisco ligado, Esc cancela e ⌘Z tira o último traço (o ⌘Z do
+     campo continua sendo do texto enquanto houver texto nele). */
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (rabisco.ligado && e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        fecharNota();
+        notaTxt.blur();
+        return modoRabisco(false);
+      }
+      if (rabisco.ligado && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (document.activeElement === notaTxt && notaTxt.value) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const t = rabisco.tracos.pop();
+        if (t) t.path.remove();
+        if (!rabisco.tracos.length) fecharNota();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey || emCampo()) return;
+      if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        modoRabisco();
+      }
+    },
+    true
+  );
+
   /* A lista de atalhos ganha as teclas novas. */
   for (const [k, v] of [
+    ['R', 'rabiscar na tela (Enter envia, Esc cancela, ⌘Z tira o último traço)'],
+    ['Alt+M', 'ditar o pedido no microfone (com a nota aberta; aperte de novo pra parar)'],
     ['F', 'comentários (pins numerados, thread, feito)'],
     ['⌘/Ctrl+K', 'buscar texto, chave, comentário ou ação'],
     ['Arrastar a alça de baixo', 'espaço até o próximo bloco (grade de 4px)'],

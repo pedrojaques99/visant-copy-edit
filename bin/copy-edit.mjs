@@ -27,7 +27,7 @@ import { pathToFileURL } from 'node:url';
 import { criarServidor, trancar } from '../server/nucleo.mjs';
 import { detectar, textoConfig } from '../server/detectar.mjs';
 
-const ADAPTERS = ['html-json', 'next-intl', 'i18n-objeto'];
+const ADAPTERS = ['html-json', 'next-intl', 'i18n-objeto', 'so-comentario'];
 const args = process.argv.slice(2);
 
 if (args.includes('--help') || args.includes('-h')) {
