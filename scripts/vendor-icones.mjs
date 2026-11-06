@@ -33,6 +33,7 @@ const ICONES = {
   reabrir: 'arrow-u-up-left',
   enviar: 'paper-plane-right',
   apagar: 'trash',
+  rabiscar: 'scribble',
 };
 
 const mapa = Object.fromEntries(

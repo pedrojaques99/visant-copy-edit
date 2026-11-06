@@ -27,6 +27,8 @@
   "dependencies": {
     "@vercel/stega": "^1.1.0",
     "diff": "^8.0.4",
+    "modern-screenshot": "^4.7.0",
+    "perfect-freehand": "^1.2.3",
     "ts-morph": "^28.0.0"
   },
   "devDependencies": {
