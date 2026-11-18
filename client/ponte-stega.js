@@ -146,7 +146,10 @@ function iniciar() {
   /* E de novo a cada troca de rota: o App Router regrava o <title> na navegação
      do cliente, com a chave junto. Sem isto a aba volta a mostrar lixo e
      ferramenta que lê o título (extensão, automação) se recusa a abrir a aba. */
-  new MutationObserver(limparTitulo).observe(document.head, { subtree: true, childList: true, characterData: true });
+  /* O documento inteiro, não só o <head>: rota dinâmica do Next transmite os
+     metadados (o <title> junto) dentro do <body>. A checagem é só comparar uma
+     string, e o observador só existe no modo editor. */
+  new MutationObserver(limparTitulo).observe(document.documentElement, { subtree: true, childList: true, characterData: true });
   const achados = alvos(document.body);
   marcar(achados);
   anunciarIdioma(achados);
