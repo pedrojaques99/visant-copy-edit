@@ -134,10 +134,19 @@ window.__copyLimpar = vercelStegaClean;
    barra). A barra lê esta flag; sem ela, o comportamento é o do HTML estático. */
 window.__copyEdit = { seletor: 'data-copy', locale: null };
 
+function limparTitulo() {
+  const limpo = vercelStegaClean(document.title);
+  if (limpo !== document.title) document.title = limpo; // idempotente: não reentra
+}
+
 function iniciar() {
   /* O título da aba também vem do JSON, com a chave invisível junto: na aba ela
      vira lixo visível. Limpa aqui (só existe no modo editor). */
-  document.title = vercelStegaClean(document.title);
+  limparTitulo();
+  /* E de novo a cada troca de rota: o App Router regrava o <title> na navegação
+     do cliente, com a chave junto. Sem isto a aba volta a mostrar lixo e
+     ferramenta que lê o título (extensão, automação) se recusa a abrir a aba. */
+  new MutationObserver(limparTitulo).observe(document.head, { subtree: true, childList: true, characterData: true });
   const achados = alvos(document.body);
   marcar(achados);
   anunciarIdioma(achados);
